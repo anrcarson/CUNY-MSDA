@@ -1,0 +1,35 @@
+---
+title: "Data607_Assignment2"
+author: "Andrew Carson"
+date: "September 7, 2016"
+output: html_document
+---
+
+
+First, load the RMySQL library.
+```{r load_library, eval=FALSE}
+library('RMySQL')
+```
+
+
+Then connect to the MySQL database (Note: password has been changed to "password") and change to the "movierating" database.
+```{r connect, eval = FALSE}
+mydb <- dbConnect(MySQL(), user='root', password='password', host='localhost')
+dbSendQuery(mydb, "USE movierating")
+```
+
+
+Then pull in the movierating table results into a dataframe and view results.
+```{r pull, eval=FALSE}
+df<-dbFetch(dbSendQuery(mydb,"SELECT * FROM movierating;"))
+```
+```{r view, eval=FALSE}
+df
+```
+
+
+Finally, disconnect the MySQL connection and clean up.
+```{r clean, eval=FALSE}
+dbDisconnect(mydb)
+mydb<-NA
+```
