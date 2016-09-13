@@ -1,0 +1,109 @@
+---
+title: "DATA607_HW3_Carson"
+author: "Andrew Carson"
+date: "September 12, 2016"
+output: html_document
+---
+
+### Chapter 8: Problems 3, 4, and 9 (EC)
+
+
+####3. 
+Copy the introductory example.  The vector `name` stores the extracted names.
+
+``` {r prep, eval=TRUE, echo=TRUE}
+library(stringr)
+
+raw.data <-"555-1239Moe Szyslak(636) 555-0113Burns, C. Montgomery555-6542Rev. Timothy Lovejoy555 8904Ned Flanders636-555-3226Simpson, Homer5553642Dr. Julius Hibbert"  
+
+name<-unlist(str_extract_all(raw.data, "[[:alpha:]., ]{2,}"))
+name
+```
+
+
+a. Use the tools of this chapter to rearrange the vector so that all elements conform to the standard `first_name last_name`.
+
+```{r 3a, eval=TRUE, echo = TRUE}
+
+# I'm sure there is a more elegant way to do this, but I couldn't find it. This gets the job done.
+name_list<-str_split(name,",")
+
+## rearrange the vector and trim.
+for (i in 1:length(name_list)) {
+  if(length(name_list[[i]])==2){
+  name_list[[i]]<-str_trim(str_c(name_list[[i]][[2]],name_list[[i]][[1]],sep = " "))
+  } 
+
+}
+
+name_a<-str_c(name_list)
+name_a
+
+## remove the preceding title.  Trim the values.
+name_a<-str_trim(str_replace_all(name_a, "[:alnum:]{2,}\\.",""))
+name_a
+
+##remove the middle names (i.e., "Montgomery").  Trim the values
+name_a<-str_trim(str_replace_all(name_a,"\\s[:alnum:]{2,}\\s",""))
+name_a
+
+```
+
+b. Construct a logical vector indicating whether a character has a title (i.e., `Rev` and `Dr.`).
+```{r 3b, eval=TRUE, echo=TRUE}
+character_title<-str_detect(name, "[:alnum:]{2,}\\.")
+character_title
+```
+
+c. Construct a logical vector indicating whether a character has a second name.
+
+```{r 3c, eval=TRUE, echo=TRUE}
+second_name<-str_detect(name, "\\s[:alnum:].\\s")
+second_name
+```
+
+####4. 
+
+Describe the types of strings that conform to the following regular expressions and construct an example that is matched by the regular expression.
+
+a. `[0-9]+\\$` : Strings with digits 0-9 that are matched one or more times and that have the $ sign at the end of them.  In the below example, only the last two match.  The others do not have the $ at the end or are missing digits.
+```{r 4a}
+example<-c("$24","$0","24","$","24$","240$")
+str_detect(example,"[0-9]+\\$")
+```
+
+b. `\\b[a-z]{1,4}\\b`: Strings that begin with a word edge, have letters a-z matched at least once but not more than 4 times, and that end with a word edge.  In the below example, only the first two match. The last three are too long, a number, and blank, respectively.
+```{r 4b}
+example<-c("a b","abc","abcded","4","")
+str_detect(example,"\\b[a-z]{1,4}\\b")
+```
+
+c. `.*?\\.txt$`: These are strings that contain any character matched zero or more times, where shortest possible sequence is returned before the sequence of ".txt", which must end the string.  In other words, this pattern is looking for text file names.  In the below, the first example is missing ".txt", the second matches, the third and fourth do not end in ".txt", and the fifth and sixth match (although the 6th probably shouldn't because it has a space in it).
+```{r 4c}
+example<-c("abc","abc.txt","abc.txt.abc","abc.txc","a4c.txt","abc abc.txt")
+str_detect(example,".*?\\.txt$")
+```
+
+d. `\\d{2}/\\d{2}/\\d{4}` : These are strings that have 2 digits, a "/", 2 digits, a "/", and then 4 digits in them.  In other words, this is looking for dates, probably of the pattern "mm/dd/yyyy".  In the below, the first fails because it is in the wrong form, the second matches, the third has no digits, the fourth has no digits and no proper form, the fifth matches, and the sixth matches because the proper pattern is in the middle of the string: "23/12/1234".
+```{r 4d}
+example<-c("01-01-2016","01/01/2016","aa/bb/cccc","abcde","01/01/2016 abcde","123/12/12345")
+str_detect(example,"\\d{2}/\\d{2}/\\d{4}")
+```
+
+e. `<(.+?)>.+?</\\1>` : These are strings that begin with"<", contains any character matched one or more times but is the shortest sequence of characters before a ">", then has any character matched one or more times but is the shortest sequence of characters before a "</", then has any character matched one or more times but is the shortest sequence of chracters before a ">".  In other words, this is looking for HTML tags: the opening tag, the middle values or text, and the closing tag.  In the below example, only the first string follows the pattern.  The others are missing "/", take the incorrent form, or are missing pieces of the pattern.
+```{r 4e}
+example<-c("<abc>abc</abc>","abcde","<abc>abc<abc>","</abc><abc>","<a></a>")
+str_detect(example,"<(.+?)>.+?</\\1>")
+```
+
+####9 (EC)
+
+The following code hides a secret message.  Crack it with `R` and regular expressions.
+```{r code}
+code<-"clcopCow1zmstc0d87wnkig7OvdicpNuggvhryn92Gjuwczi8hqrfpRxs5Aj5dwpn0TanwoUwisdij7Lj8kpf03AT5Idr3coc0bt7yczjatOaootj55t3Nj3ne6c4Sfek.r1w1YwwojigOd6vrfUrbz2.2bkAnbhzgv4R9i05zEcrop.wAgnb.SqoU65fPa1otfb7wEm24k6t3sR9zqe5fy89n6Nd5t9kc4fE905gmc4Rgxo5nhDk!gr"
+
+message<-str_c(unlist(str_extract_all(code, "[[:upper:].!]")), collapse="")
+message
+
+```
+
