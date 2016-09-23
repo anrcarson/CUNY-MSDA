@@ -1,0 +1,176 @@
+---
+title: "DATA607 Project 1: Chess Tournament"
+author: "Andrew Carson"
+date: "September 13, 2016"
+output: html_document
+---
+
+
+### Project Description
+In this project, you're given a text file with chess tournament results where the information has some structure. Your job is to create an R Markdown file that generates a .CSV file (that could for example be imported into a SQL database) with the following information for all of the players:
+
+    Player's Name, Player's State, Total Number of Points, Player's Pre-Rating, and Average Pre Chess Rating of Opponents
+
+For the first player, the information would be:
+Gary Hua, ON, 6.0, 1794, 1605
+
+1605 was calculated by using the pre-tournament opponents' ratings of 1436, 1563, 1600, 1610, 1649, 1663, 1716, and dividing by the total number of games played.
+
+All of your code should be in an R markdown file (and published to rpubs.com), with your data accessible for the person running the script.
+
+###Solution
+```{r code, eval=TRUE, echo=TRUE}
+library(stringr)
+
+#read data
+raw_data<-read.delim("https://raw.githubusercontent.com/anrcarson/CUNY-MSDA/master/DATA607/Project1/tournamentinfo.txt",header = FALSE, stringsAsFactors = FALSE)
+
+#view data
+#raw_data
+
+#remove header
+data_no_header<-raw_data[5:196,]
+
+#get name row
+data_name_rows<-data_no_header[seq(from=1,to=192, by=3)]
+name_df<-
+ as.data.frame(matrix(unlist(str_split(data_name_rows,"\\|")),nrow=64, byrow=T), stringsAsFactors = FALSE) #credit: http://ggorjan.blogspot.com/2011/01/converting-strsplit-output-to-dataframe.html
+
+#set names
+names(name_df)<-c("PairNum","PlayerName","TotalPoints","Round1","Round2","Round3","Round4","Round5","Round6","Round7","Empty")
+name_df$Empty<-NULL
+
+#get state row
+data_state_rows<-data_no_header[seq(from=2,to=192, by=3)]
+state_df<-
+ as.data.frame(matrix(unlist(str_split(data_state_rows,"\\|")),nrow=64, byrow=T), stringsAsFactors = FALSE) #credit: http://ggorjan.blogspot.com/2011/01/converting-strsplit-output-to-dataframe.html
+
+names(state_df)<-c("PlayerState","IdRating","TotalPoints_2","Round1_2","Round2_2","Round3_2","Round4_2","Round5_2","Round6_2","Round7_2","Empty")
+state_df$Empty<-NULL
+
+
+#combine the two dfs
+df<-cbind(name_df,state_df)
+
+#get pre-rating
+df$PreRating<-matrix(unlist(str_extract_all(df$IdRating,"[:digit:]{3,}")), nrow=64, byrow=T)[,2]
+df$PreRating<-as.numeric(df$PreRating)
+
+#get opponents
+df$Round1_Opp<-str_extract(df$Round1,"[:digit:]{1,}")
+df$Round2_Opp<-str_extract(df$Round2,"[:digit:]{1,}")
+df$Round3_Opp<-str_extract(df$Round3,"[:digit:]{1,}")
+df$Round4_Opp<-str_extract(df$Round4,"[:digit:]{1,}")
+df$Round5_Opp<-str_extract(df$Round5,"[:digit:]{1,}")
+df$Round6_Opp<-str_extract(df$Round6,"[:digit:]{1,}")
+df$Round7_Opp<-str_extract(df$Round7,"[:digit:]{1,}")
+
+
+#trim pairnum
+df$PairNum<-str_trim(df$PairNum)
+
+#get average pre-rating of opponents
+average_prerating <- c()
+for(i in 1:nrow(df)) {
+   #i<-44
+  average_prerating<-c(average_prerating,
+    round(                   
+    mean(
+      c(
+     df$PreRating[which(df$PairNum == df$Round1_Opp[i])]
+     ,df$PreRating[which(df$PairNum == df$Round2_Opp[i])]
+     ,df$PreRating[which(df$PairNum == df$Round3_Opp[i])]
+     ,df$PreRating[which(df$PairNum == df$Round4_Opp[i])]
+     ,df$PreRating[which(df$PairNum == df$Round5_Opp[i])]
+     ,df$PreRating[which(df$PairNum == df$Round6_Opp[i])]
+     ,df$PreRating[which(df$PairNum == df$Round7_Opp[i])]
+      )
+  ,na.rm = TRUE, trim=0)
+  ))
+  
+}
+
+df$AveragePreRating_Opponents<-average_prerating
+
+
+#assemble final df
+final_df<-data.frame(
+              cbind(
+              str_trim(df$PlayerName)
+              ,str_trim(df$PlayerState)
+              ,str_trim(df$TotalPoints)
+              ,str_trim(df$PreRating)
+              ,str_trim(df$AveragePreRating_Opponents)
+                ) #cbind
+                ,stringsAsFactors = FALSE)
+
+names(final_df)<-c("PlayerName","PlayerState","PlayerTotalPoints","PlayerPreRating","AvgPreRating_Opponents")
+```
+
+```{r write, eval=FALSE}
+#write the csv file
+write.csv(final_df, file="tournamentinfo_clean.csv", row.names = FALSE)
+
+```
+
+
+### Add Extra Columns
+```{r extra}
+
+#get post-rating
+final_df$PlayerPostRating<-
+  matrix(unlist(str_extract_all(df$IdRating,"[:digit:]{3,}")), nrow=64, byrow=T)[,3]
+final_df$PlayerPostRating<-as.numeric(final_df$PlayerPostRating)
+
+#make numeric
+final_df$PlayerPreRating<-as.numeric(final_df$PlayerPreRating)
+final_df$AvgPreRating_Opponents<-as.numeric(final_df$AvgPreRating_Opponents)
+
+#get PostRating - PreRating difference
+final_df$PlayerPostPreDiff<-final_df$PlayerPostRating - final_df$PlayerPreRating
+
+#get PlayerPrerating - AvgPreRating_Opponents diff
+final_df$PlayerPreRateAvgOppDiff<- final_df$PlayerPreRating - final_df$AvgPreRating_Opponents
+
+```
+
+
+
+### Data Exploration
+
+Here is the data.
+```{r explore0}
+library(DT)
+datatable(final_df)
+
+```
+
+Pre-rating is skewed left.  The mean is 1378 with a low of 377 and a max of 1764.  The standard deviation is 265.
+``` {R explore1}
+hist(final_df$PlayerPreRating, xlim = c(0,2000), ylim = c(0,10), breaks = seq(0,2000,50))
+summary(final_df$PlayerPreRating)
+sd(final_df$PlayerPreRating)
+```
+
+Post-rating is more normal than pre-rating, though still skewed left.  The mean is 1398 with a min of 878 and a max of 1817.  The standard deviation is 231.
+``` {R explore2}
+hist(final_df$PlayerPostRating,  xlim = c(0,2000), ylim = c(0,10), breaks = seq(0,2000,50))
+summary(final_df$PlayerPostRating)
+sd(final_df$PlayerPostRating)
+```
+
+Looking at a boxplot for each, the distribution doesn't change much, except that PostRating no longer has the outlier that PreRating had.
+```{r explore3}
+boxplot(final_df$PlayerPreRating, final_df$PlayerPostRating, names = c("PreRating","PostRating"))
+```
+
+Viewing the difference between the pre-rating and the post-rating, we see that it is not normall distributed.  It is highly skewed right.  The min is -94, the max is 699, and the median is 0 while the mean is 19.67.  Interestingly, the same number of players gained in rating (31) as did lose in rating (31), while 2 players had no change.
+
+```{r explore4}
+hist(final_df$PlayerPostPreDiff)
+summary(final_df$PlayerPostPreDiff)
+sum(final_df$PlayerPostPreDiff < 0)/length(final_df$PlayerPostPreDiff)
+sum(final_df$PlayerPostPreDiff > 0)/length(final_df$PlayerPostPreDiff)
+sum(final_df$PlayerPostPreDiff == 0)/length(final_df$PlayerPostPreDiff)
+```
+
