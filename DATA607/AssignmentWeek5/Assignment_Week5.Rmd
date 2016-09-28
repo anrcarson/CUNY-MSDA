@@ -1,0 +1,101 @@
+---
+title: 'DATA 607: HW Week 5'
+author: "Andrew Carson"
+date: "September 27, 2016"
+output:
+  html_document:
+    highlight: pygments
+    theme: cosmo
+---
+
+##1: Create Data File
+I used a .csv (created in Excel, then saved as a .csv).
+
+##2a: Read the Information Into R
+
+The data is shown as below.  I only added two column names where they were missing ("Airline" and "Status").  I also removed the blank row in between the two airline groupings, and repeat the missing values in "Airline".
+
+```{r 2a, eval=TRUE}
+  data<-read.csv("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/Assignment_Week5_data.csv")
+  data
+```
+
+##2b: Use `tidyr` and `dplyr` to tidy and transform the data
+Now that I have the data, I pipe the data to gather the city columns into one column ("City").  Then I reorder the columns before I spread the data to make "On Time" and "Delayed" into separate columns populated by the "Counts" data.  Then I change the column name "On Time" to "OnTime". 
+
+Finally, I use mutate to calculate the Total number of flights per route as well as the Delayed Percentage per route for each airline.  Then I assign the transformed data to the "final" variable.
+
+```{r 2b, eval=TRUE}
+library(tidyr)
+library(dplyr)
+
+#tidy the data
+tidy_data<-data %>%
+  gather(City,Counts,3:7) %>%
+  select(Airline,City,Status,Counts) %>%
+  spread(Status,Counts)
+
+#change name
+names(tidy_data)[4]<-"OnTime"
+
+#transform the data for analysis
+transform_data<-tidy_data %>%
+  mutate(Total = Delayed + OnTime) %>%
+  mutate(Delay_Perc = Delayed/Total)
+
+#set as final
+final<-transform_data
+final
+
+```
+
+##3: Analysis to Compare the Arrival Delays of the Two Airlines
+I suspect a Simpson's paradox here...
+
+Let's compare total delay percentages between the two airlines.  I use the `group_by` function to group by Airline before summarizing the data by the Delayed Total Percentage, calculated by summing up the Delayed column and dividing that by the sum of the Total column.
+```{r 3a}
+final %>%
+  group_by(Airline) %>%
+  summarise(DelayedTotal_Perc=sum(Delayed) / sum(Total))
+```
+
+We see that Alaska is delayed 13.3% of the time while AM West is delayed almost 10.8% of the time for all flights combined.  Now let's compare each route individually.
+```{r 3b}
+final %>%
+  select(Airline,City,Delay_Perc) %>%
+  spread(Airline,Delay_Perc)
+```
+Since each route's delayed percentage has already been calculated, I reorder and limit the data using the `select` function to the columns that I need (Airline, City, and Delay Percentage).  Then I use the `spread` function to move the Airline values to the columns, which are populated by the Delay Percentage values according to the City.
+
+When looking at each route individually, we see that Alaska always has fewer delays as a percentage than AM West.  So as I suspected, this is Simpson's paradox.  When looking at the aggregated delays, Alaska has a greater ratio of delays.  However, when looking at each route individually, AM West has a greater ratio of delays for each route.
+
+In short, we have this paradox.  So if asked, "which airline has more delays?", we'd have to clarify the question.  Are we concerned with each route individually?  If so, AM West has more delays as a percentage per route.  Are we concerned with all flights in total, regardless of route?  If so, Alaska has more delays as a percentage of total.
+
+Let's look at the delay percentages and standard deviations.
+```{r ec1}
+summary(filter(final, Airline=="Alaska")$Delay_Perc)
+sd(filter(final, Airline=="Alaska")$Delay_Perc)
+
+summary(filter(final, Airline=="AM West")$Delay_Perc)
+sd(filter(final, Airline=="AM West")$Delay_Perc)
+```
+We can see that by this analysis, looking at the route percentages, AM West looks a lot worse.  The minimum route delay percentage is 7% compared to 5%, the mean is 18% compared to 11%, and the maximum is 29% compared to 17%.  Alaska has a delay percentage standard deviation of 5% while AM West has a standard deviation of 8%.  So I suppose if one is looking for a more consistent experience, Alaska is preferrable to AM West.  
+
+Who does the most flights?  In total, AM West does much more.  7225 compared to 3775.
+```{r ec2}
+final %>%
+  group_by(Airline) %>%
+  summarise(Total=sum(Total))
+```
+
+By route, however, Alaska does have more flights to Seattle and San Francisco. The other routes have more by AM West.  Phoenix has a lot more.  
+
+```{r ec3}
+final %>%
+  select(Airline,City,Total) %>%
+  spread(Airline,Total) 
+```
+
+## Conclusion
+
+It's hard to say which airline is "better" in terms of delays.  Instead, we should be more precise: "better" for what?  Overall, arguably AM West.  Each route?  Alaska.  Consistency among routes? Alaska.  So I suppose I'd lean more towards Alaska, but neither choice is overwhelming.
