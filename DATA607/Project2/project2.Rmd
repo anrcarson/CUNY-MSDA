@@ -1,0 +1,475 @@
+---
+title: "Project 2: Tidying, Transforming, and Analyzing"
+author: "Andrew Carson"
+date: "October 3, 2016"
+output: 
+  html_document:
+    theme: united
+    highlight: tango
+
+---
+
+### Task:
+
+Your task is to:
+
+1. Choose any three of the "wide" datasets identified in the Week 6 Discussion items. (You may
+use your own dataset; please don't use my Sample Post dataset, since that was used in your
+Week 6 assignment!).  **For each of the three chosen datasets:**
+    + Create a .CSV file (or optionally, a MySQL database!) that includes all of the information included in the dataset. You're encouraged to use a "wide" structure similar to how the information appears in the discussion item, so that you can practice tidying and transformations as described below.
+
+    + Read the information from your .CSV file into R, and use tidyr and dplyr as needed to tidy and transform your data. [Most of your grade will be based on this step!]
+
+    + Perform the analysis requested in the discussion item.
+
+    + Your code should be in an R Markdown file, posted to rpubs.com, and should include narrative descriptions of your data cleanup work, analysis, and conclusions.
+
+2. Please include in your homework submission, for each of the three chosen datasets:
+    + The URL to the .Rmd file in your GitHub repository, and
+    + The URL for your rpubs.com web page
+    
+    
+### Solution:
+
+#### 1: Football Statistics
+##### Load and Clean the Data
+The data is taken from here: `http://www.pro-football-reference.com/boxscores/201609250sea.htm`.  
+
+I created a .CSV file by copying the data from the above webpage into an Excel file and saving the file as a .CSV.  This is itself a challenge because Excel changes some of the values into dates automatically.  The solution is to select the area in which the paste will occur and format the cells to 'Text'.  Then paste the data using the "Match Destination Formatting" option.  Then the data won't change into date values.
+
+Now I load the data and display it below.
+
+```{r 1a, eval=TRUE}
+  data<-read.csv("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/Project2/football_data.csv")
+  data
+```
+
+A lot of cleanup and transformation will have to occur.  I first load the libraries.
+```{r 1b, eval=TRUE, message=FALSE}
+library(stringr)
+library(tidyr)
+library(dplyr)
+library(DT)
+```
+
+Now for the tidying.
+```{r 1c, eval=TRUE, message=FALSE, warning=FALSE}
+
+#gather, select, and spread the data
+data_tidy<-data %>%
+  gather(Team,Value,2:3) %>%
+  select(Team,X,Value) %>%
+  spread(X,Value)
+
+data_tidy
+```
+Several of the columns have multiple values in them that are separated by a "-".  We need to break these up into individual columns.  We can use the `separate` function to do so.
+
+```{r 1d, eval=TRUE, message=FALSE, warning=FALSE}
+
+#remove empty column
+data_tidy[,2]<-NULL
+
+#separate the columns with multiple values
+data_separate<-data_tidy %>%
+  separate("Cmp-Att-Yd-TD-INT",c("PassCompletions","PassAttempts","PassYards","PassTD","PassINT"), sep = "-", remove = TRUE) %>%
+  separate("Fourth Down Conv.",c("FourthDownAtt","FourthDownConv"), sep = "-", remove = TRUE) %>%
+  separate("Fumbles-Lost",c("FumblesMade","FumblesLost"), sep = "-", remove = TRUE) %>%
+  separate("Penalties-Yards",c("PenaltyCount","PenaltyYards"), sep = "-", remove = TRUE) %>%
+  separate("Rush-Yds-TDs",c("RushingAttempts","RushYards","RushTD"), sep = "-", remove = TRUE) %>%
+  separate("Sacked-Yards",c("SackedCounts","SackedYards"), sep = "-", remove = TRUE) %>%
+  separate("Third Down Conv.",c("ThirdDownAtt","ThirdDownConv"), sep = "-", remove = TRUE)
+
+#convert time of possession to minutes only
+for (i in 1:length(data_separate$`Time of Possession`)) {
+  temp<-as.numeric(unlist(str_split(data_separate$"Time of Possession"[i],":")))
+  data_separate$"Time of Possession"[i]<-temp[1]+temp[2]/60
+}
+
+
+data_separate
+```
+
+##### Analysis
+Now that we have the data tidied and transformed, we can perform the analysis: `Compare the yards per touchdown (both rushing and passing) for both teams. What does this mean?`
+
+First, let's compare the passing yards to the passing touchdowns for both teams.  Since these variables are still characters due to the splitting, we need to cast them as numeric before dividing the yards by the TDs.  We can use the `mutate` function to do this calculation and add it to our data.  We can then use `select` to look at the result for each team.
+
+```{r 1e, eval=TRUE, message=FALSE, warning=FALSE}
+data_analysis<-data_separate %>%
+  mutate(PassYdsPerPassTD = as.numeric(PassYards) / as.numeric(PassTD))
+
+select(data_analysis,Team, PassYdsPerPassTD)
+```
+We see that the Seahawks averaged 154 passing yards per passing touchdown.  So it took, on average, 154 yards of passing to get a touchdown.  The lower this number is, the better, since it would mean that a team had to pass for fewer yards to get a touchdown as a result.  The 49ers averaged `Inf`.  The `Inf` value is the result of having 0 passing touchdowns, so we were dividing by 0.  We can interpret this as "it would take an infinite number of passing yards to get a passing touchdown".  So on this analysis, the Seahawks did better in passing in that their passing yielded touchdowns more quickly than the 49ers.
+
+What about rushing?  We can do the same analysis with the rushing yards compared to the rushing touchdowns.  
+```{r 1f, eval=TRUE, message=FALSE, warning=FALSE}
+data_analysis<-data_analysis %>%
+  mutate(RushYdsPerRushTD = as.numeric(RushYards) / as.numeric(RushTD))
+
+select(data_analysis,Team, RushYdsPerRushTD)
+```
+We see that, again, the Seahawks have a lower number than the 49ers.  In other words, the Seahawks have to rush for fewer yards than the 49ers do before the rushing yields a rushing touchdown.  But it is not much lower.  In fact, it is almost the same.
+
+We can combine these results to look at total yards compared to total touchdowns.  We use the `Total Yards` column which accounts for lost yards due to sacks.
+```{r 1g, eval=TRUE, message=FALSE, warning=FALSE}
+data_analysis<-data_analysis %>%
+  mutate(YdsPerTD = as.numeric(data_analysis$"Total Yards") / (as.numeric(RushTD) + as.numeric(PassTD)))
+
+select(data_analysis,Team, YdsPerTD )
+```
+It took the Seahawks, on average, 104.5 yards of passing and rushing to get a touchdown, while it took the 49ers 127 yards on average.  While the Seahawks did better in this regard, it is not a whole lot better.  The trouble for the 49ers was that they had very little yardage in comparison to the Seahawks and never got a passing touchdown.  So even if the 49ers had a yards per touchdown average of 90, if they only went 90 yards in total, they would only have one touchdown, which may not be enough to win the game.
+
+##### Conclusion
+In conclusion, we see that teams may be very similar in certain statistics (e.g., yards/touchdown) and very different in others (e.g., total touchdowns).  It is important then to know which statistics matter in assessing whether a team will win or lose and which are not so important.  Obviously, total touchdowns are important.  But suppose we only knew a team's average yards per touchdown in comparison to another team.  That information alone may not be enough to accurately predict who will win the game, since we don't know how many yards on average that team may get during a game.
+
+***
+#### 2: San Francisco Salaries Analysis 
+##### Load and Clean the Data
+The data on San Francisco public employee salaries and benefits comes from this page: http://transparentcalifornia.com/salaries/2015/san-francisco/.  It has links to data from 2011-2015.  I download each file as a .csv.  I then import the files into R one at a time.
+
+```{r 2a, eval=TRUE, echo=TRUE}
+
+#import each file
+temp_data_1<-read.csv("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/Project2/san-francisco-2011.csv",stringsAsFactors = FALSE)
+temp_data_2<-read.csv("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/Project2/san-francisco-2012.csv",stringsAsFactors = FALSE)
+temp_data_3<-read.csv("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/Project2/san-francisco-2013.csv",stringsAsFactors = FALSE)
+temp_data_4<-read.csv("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/Project2/san-francisco-2014.csv",stringsAsFactors = FALSE)
+temp_data_5<-read.csv("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/Project2/san-francisco-2015.csv",stringsAsFactors = FALSE)
+  
+#check names
+#names(temp_data_1)
+#names(temp_data_2)
+#names(temp_data_3)
+#names(temp_data_4)
+#names(temp_data_5)
+
+#add missing status to 2011-2013
+temp_data_1$Status<-NA
+temp_data_2$Status<-NA
+temp_data_3$Status<-NA
+
+
+#adjust the names
+names(temp_data_1)<-names(temp_data_5)
+names(temp_data_2)<-names(temp_data_5)
+names(temp_data_3)<-names(temp_data_5)
+names(temp_data_4)<-names(temp_data_5)
+
+#rbind the data into one dataframe
+data<-rbind(temp_data_1,temp_data_2,temp_data_3,temp_data_4,temp_data_5)
+```
+Now that I have the data imported, I can look at it.  It is interesting to see that some of the pay values were negative.  
+
+```{r 2b, eval=TRUE}
+#see summary output
+summary(data)
+
+#see structure
+str(data)
+
+```
+##### Analysis
+The analysis called for:
+
+`1. Categorize the data via job title and profile.`
+
+`2. Salary changes over time between different groups`
+
+`3. Base pay, overtime pay, and benefits allocated between different groups.`
+
+The profile does not exist in the data download.  Instead, it is already split into `Year` and `Agency`.  So `1` has been done.
+
+I move on to `2`.  To get salary changes over time between the different groups (i.e., job titles), I need to spread the data after grouping by job title.  For salary, perhaps `base pay` is the closest in meaning.  But I'd like to see the total benefits plus pay instead, as this will give us a better picture of the total compensation a person receives. So I group the data using the average `Total.Pay...Benefits`.
+
+```{r 2c, eval=TRUE, echo=TRUE}
+salary_over_time<-data %>%
+  select(Job.Title,Total.Pay...Benefits,Year) %>%
+  mutate(Job.Title = str_to_upper(Job.Title)) %>%
+  group_by(Job.Title,Year) %>%
+  summarise(Average_TotalPayBenefits = mean(Total.Pay...Benefits)) %>%
+  spread(Year,Average_TotalPayBenefits)
+```
+
+Which job title has the biggest total increase in pay from 2011 to 2015?  It looks like the largest increase from 2011 to 2015 was $229,702.  This belongs to the Mayor, whose total benefits and pay increased from $134,205 to $363,908.  
+```{r 2d, eval=TRUE, echo=TRUE}
+#calculate increase
+salary_over_time$NetPayIncrease<-salary_over_time$`2015` - salary_over_time$`2011`
+
+#find the max increase
+max(salary_over_time$NetPayIncrease, na.rm = TRUE)
+
+#return the row with the max increase
+subset(salary_over_time, NetPayIncrease == max(salary_over_time$NetPayIncrease, na.rm = TRUE))
+```
+
+What about proportional increase?  The maximum proportional increase belongs to the audiometrist, whose total pay and benefits increased by 892% from $10,595 to $105,185.
+```{r 2e, eval=TRUE, echo=TRUE}
+#calculate proportional increase
+salary_over_time$PropPayIncrease<-(salary_over_time$`2015` - salary_over_time$`2011`) / salary_over_time$`2011`
+
+#find the max increase
+max(salary_over_time$PropPayIncrease, na.rm = TRUE)
+
+#return the row with the max increase
+subset(salary_over_time, PropPayIncrease == max(salary_over_time$PropPayIncrease, na.rm = TRUE))
+```
+I also find the average net increase and the average proportional increase.  The net increase average is $37980 and the proportional increase average is 60%.  I look at the other summary statistics as well to get a sense of the distribution.
+```{r 2f, eval=TRUE, echo=TRUE}
+#calculate net increase
+summary(salary_over_time$NetPayIncrease)
+
+#calculate proportional increase
+summary(salary_over_time$PropPayIncrease)
+```
+
+I move on to `3`. Focusing on the 2015 data, I compare base pay, overtime pay, other pay, total pay, and total pay plus benefits among the job titles.  I ignore `benefits` since the column is all `NA`.
+```{r 2g, eval=TRUE, echo=TRUE}
+#select 2015 data, capitalize job titles, group by job titles, rearrange the columns, and summarize each using the mean
+data_2015<-data %>%
+  subset(Year == 2015) %>%
+  mutate(Job.Title = str_to_upper(Job.Title)) %>%
+  group_by(Job.Title) %>%
+  select(Job.Title, Base.Pay, Overtime.Pay, Other.Pay, Total.Pay, Total.Pay...Benefits) %>%
+  summarise_each(funs(mean))
+
+```
+
+Now I can see which jobs have the highest and lowest in each category:
+```{r 2h, eval=TRUE, echo=TRUE}
+
+#base pay
+head(arrange(data_2015,Base.Pay)) #lowest base pay
+head(arrange(data_2015,desc(Base.Pay))) #highest base pay 
+
+#Overtime.Pay
+head(arrange(data_2015,Overtime.Pay)) #lowest Overtime.Pay
+head(arrange(data_2015,desc(Overtime.Pay))) #highest Overtime.Pay
+
+#Other.Pay
+head(arrange(data_2015,Other.Pay)) #lowest Other.Pay
+head(arrange(data_2015,desc(Other.Pay))) #highest Other.Pay
+
+#Total.Pay
+head(arrange(data_2015,Total.Pay)) #lowest Total.Pay
+head(arrange(data_2015,desc(Total.Pay))) #highest Total.Pay
+
+#Total.Pay...Benefits
+head(arrange(data_2015,Total.Pay...Benefits)) #lowest Total.Pay...Benefits
+head(arrange(data_2015,desc(Total.Pay...Benefits))) #highest Total.Pay...Benefits
+
+```
+The highest paid and compensated employees are the chief investment officer, chief of police, manager of public transportation, fire chief, public health administrator, administrator of San Francisco General Hospital, and the mayor.  These are all high profile public positions, except for the CIO and the hospital administrator, which must receive competetive compensations with what the private sector could pay for each employee.  
+
+The highest overtime pay is for mechanical, track, and transit supervisors.  These supervisors are adding about a third to one-half to their base pay in overtime pay.  This seems a little suspicious to me.  It probably deserves looking into, or at least further investigation and an explanation.
+
+Those that are paid very little look like they are occupying entry level positions (e.g., accountant) and volunteer/part-time/contract positions (e.g., recreation director).
+
+##### Conclusion
+In conclusion, this is a great dataset.  I like that San Francisco is being transparent about how much people are getting paid.  This is a great way to keep track of pay increases over time to make sure that such increases are reasonable and make sense according to the type of work being done.
+
+***
+#### 3:  Age and Gender and Income
+##### Load and Clean Data
+The data comes from here: http://www.census.gov/population/age/data/files/2012/2012gender_table17.csv.
+
+```{r 3a, eval=TRUE, echo=TRUE}
+data<-read.csv("http://www.census.gov/population/age/data/files/2012/2012gender_table17.csv", stringsAsFactors = FALSE)
+```
+The data comes in very messy and requires significant cleanup.
+
+```{r 3b, eval=TRUE, echo=TRUE}
+#remove top 4 rows
+data<-data[5:52,]
+
+#remove bottom 8 rows
+data<-data[1:40,]
+
+#make row 1 the header
+names(data)<-data[1,]
+
+#remove rows 1 and 2
+data<-data[3:40,]
+
+#remove percent columns
+data[,seq(3,23,2)]<-NULL
+
+#replace "-" with 0, according to legend
+for(i in 1:ncol(data)) {
+  data[which(data[,i]=="-"),i]<-0
+}
+
+#break into 3 tables
+both<-data[1:12,]
+male<-data[14:25,]
+female<-data[27:38,]
+
+#add Gender columns to male and female tables.  Ignore both as it is no longer needed.
+male$Gender<-"Male"
+female$Gender<-"Female"
+
+#remove row 1 from both male and female tables
+male<-male[2:12,]
+female<-female[2:12,]
+
+#combine male and female tables
+combined<-bind_rows(male,female)
+
+#give column one the name "Age"
+names(combined)[1]<-"Age"
+
+#reorder the columns
+combined<-combined[,c(1,13,3:12)]
+
+#view data
+head(combined)
+
+```
+
+##### Analysis
+
+The analysis asks us to `compare income between same age group male and female.`  So we need to do some tidying by `spread`ing and`gather`ing the data.
+
+```{r 3c, eval=TRUE}
+combined_spread<-combined %>%
+  gather(Income, Counts,3:12) %>%
+  select(Age,Gender,Income,Counts) %>%
+  spread(Gender,Counts)
+
+head(combined_spread)
+```
+
+There are several routes we can now take to compare income based on age and gender.  I will first start by turning the counts into percentages of the age and gender.
+
+```{r 3d, eval=TRUE}
+
+#remove commas in Male and Female
+combined_spread$Male<-str_replace(combined_spread$Male,",","")
+combined_spread$Female<-str_replace(combined_spread$Female,",","")
+
+#cast as numeric
+combined_spread$Female<-as.numeric(combined_spread$Female)
+combined_spread$Male<-as.numeric(combined_spread$Male)
+
+#get sum of each age category by gender
+female_sum<-combined_spread %>%
+  group_by(Age) %>%
+  summarise(Female_Sum=sum(as.numeric(Female, na.rm=TRUE)))
+
+male_sum<-combined_spread %>%
+  group_by(Age) %>%
+  summarise(Male_Sum=sum(as.numeric(Male, na.rm=TRUE)))
+
+#join each to the combined spread
+combined_spread<-left_join(combined_spread,female_sum, by="Age")
+combined_spread<-left_join(combined_spread,male_sum, by="Age")
+
+#get percentages
+combined_spread <- combined_spread %>%
+  mutate(Female_Perc = Female / Female_Sum) %>%
+  mutate(Male_Perc = Male / Male_Sum)
+
+```
+
+As a first stab at the problem, if there is no difference between males and females when it comes to income, then in each age and income combination, there shouldn't be any significant difference between the percentages of males and females in that age and income combination.  Let's subtract the female percentage from the male percentage for each age and income combination and see if there are any large differences.
+
+```{r 3e, eval=TRUE}
+#subtract female percentage from male percentage
+combined_spread$Perc_Diff<-combined_spread$Male_Perc - combined_spread$Female_Per
+
+#order the outcome by Perc_Diff
+combined_spread<-arrange(combined_spread,Perc_Diff)
+
+#see head
+head(select(combined_spread,Age,Income,Perc_Diff))
+
+#see tail
+tail(select(combined_spread,Age,Income,Perc_Diff))
+```
+If we look at the incomes in which females are more likely than males as a percentage, the incomes are in the lower to middle brackets: $15,000 to $19,999, $25,000 to $34,999, and $35,000 to $49,999.  If we look at the incomes in which males are more likely than females as a percentage, the incomes are all $100,000 and over (excepting the under $5,000 category for 15 - 17 year olds).  So it does seem that there is correlation between higher wages and being male, or conversely, between lower wages and being female.
+
+We really want to treat Age as a numeric value, not as a category.  Similarly with income.  As another approach to comparing males and females by age and income, let's convert the age and income categories to numeric values by using the middle value in each.  We thereby explicitly make the assumption that the true mean of each category is the middle value, even though this is almost certainly not true.  However, we can't figure out what the true mean is for each category given the data we have, and this approach should be true enough for our purposes.
+
+```{r 3f, eval=TRUE}
+#get middle age value
+age_column<-c()
+for(i in 1: length(combined_spread$Age)){
+  age_vector<-as.numeric(str_extract_all(combined_spread$Age,"[0-9]{2}")[[i]])
+  age_mean<-mean(age_vector, na.rm = TRUE)
+  age_column<-c(age_column,age_mean)
+}
+
+#add to combined_spread
+combined_spread$Age_Mean<-age_column
+
+
+#get middle income value
+income_column<-c()
+for(i in 1: length(combined_spread$Income)){
+  income_vector<-as.numeric(str_extract_all(str_replace_all(combined_spread$Income,",",""),"[0-9]{2,}")[[i]])
+  income_mean<-mean(income_vector, na.rm = TRUE)
+  income_column<-c(income_column,income_mean)
+}
+
+#add to combined_spread
+combined_spread$Income_Mean<-income_column
+
+```
+
+Now we can multiply the `Income_Mean` by the percentages of male and female for each `Age_Mean`, and then we can group by the `Age_Mean` and sum up the `Income_Mean` to get the average income for males and females for each `Age_Mean`.
+
+```{r 3g, eval=TRUE}
+#get the proportional income for the age bracket for males and females and join together
+combined_avg<-combined_spread %>%
+  mutate(Prop_Male_Income = Male_Perc * Income_Mean) %>%
+  mutate(Prop_Female_Income = Female_Perc * Income_Mean) %>%
+  select(Age_Mean,Prop_Male_Income,Prop_Female_Income)
+  
+male_combined_avg<-combined_avg %>%
+  group_by(Age_Mean) %>%
+  summarise(Male_AVG_Income = sum(Prop_Male_Income))
+  
+female_combined_avg <-combined_avg %>%
+  group_by(Age_Mean) %>%
+  summarise(Female_AVG_Income = sum(Prop_Female_Income))
+  
+combined_avg_both<-left_join(male_combined_avg,female_combined_avg, by="Age_Mean")
+
+```
+```{r 3h, eval=TRUE}
+#calculate difference
+combined_avg_both<-mutate(combined_avg_both,Difference = Male_AVG_Income - Female_AVG_Income)
+
+#display
+combined_avg_both
+
+```
+
+We can see that apart from the first `Age_Mean` of 16, males always have higher incomes than females. Furthermore, apart from one `Age_Mean`, the difference is always increasing.
+
+We can plot this information to see it visually.
+```{r 3i, eval=TRUE}
+plot(combined_avg_both$Age_Mean,combined_avg_both$Male_AVG_Income, col="blue", type="l", lwd=3, ylim=c(-5000,70000), main="Male Income vs. Female Income by Age", xlab = "Age", ylab="Income")
+lines(combined_avg_both$Age_Mean,combined_avg_both$Female_AVG_Income, col="pink", type="l", lwd=3)
+lines(combined_avg_both$Age_Mean,combined_avg_both$Difference, col="red", type="l", lwd=3)
+legend("topleft",
+       inset=.05,
+       cex = .5,
+       title="Legend",
+       c("Male","Female","Difference"),
+       horiz=FALSE,
+       lty=c(1,1),
+       lwd=c(1,1),
+       col=c("blue","pink","red"),
+       bg="grey96")
+```
+
+Using this, it appears that males and females are roughly the same until the late 20s.  At that point, males increase in income at a faster rate than females do.  This continues over the 30s, but slows down and mostly stops in the 40s.  By the mid 40s, male and female incomes move in parallel, maintaining roughly the same difference in wage through the 50s and 60s.
+
+##### Conclusion
+In conclusion, while much more could be said here, the two analyses suggest that males do have a higher income than females.  And in the highest income brackets, the disproportion between males and females is the highest.  Why is that?  
+
+It appears that much of the difference can be explained by whatever is happening from the late 20s through the 30s.  As a hypothesis, these are years when women typically have children and many of these women could have taken a break from the career to have and raise children before returning to work full time.  As these women would be competing against male colleagues that didn't take a break from working, it may not surprise us that these colleagues continued to receive increases in income while their female counterparts did not.  
+
+If we are NOT assuming that women are paid less due to sex discrimination, the above explanation seems like a reasonable possibility.  More data and analysis would be necessary to determine whether it is true or not.  We could, for example, compare the incomes of women that took time off to raise children to those that didn't to see if there is a difference, and if those that didn't take time off kept pace with males of the same age.  Unfortunately, the data here is not detailed enough to permit such an analysis.
