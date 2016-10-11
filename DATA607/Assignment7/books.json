@@ -1,4 +1,4 @@
-{"books" :[
+{"books":[
 	{
 	"BookTitle" : "The Republic",
 	"Author" : "Plato",
@@ -14,7 +14,7 @@
 	"TimePeriod" : "Contemporary"
 	},
 	{
-	"BookTitle" : Consolation of Philosophy",
+	"BookTitle" : "Consolation of Philosophy",
 	"Author" : "Boethius",
 	"PhilosophySubject" : "Philosophy of Religion",
 	"Pages" : 216,
