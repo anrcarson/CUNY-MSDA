@@ -1,0 +1,30 @@
+{"books":[
+	{
+	"BookTitle" : "The Republic",
+	"Author" : "Plato",
+	"PhilosophySubject" : "Political Philosophy",
+	"Pages" : 416,
+	"TimePeriod" : "Ancient"
+	},
+	{
+	"BookTitle" : "Metaphysics",
+	"Author" : "Peter Van Inwagen",
+	"PhilosophySubject" : "Metaphysics",
+	"Pages" : 329,
+	"TimePeriod" : "Contemporary"
+	},
+	{
+	"BookTitle" : "Consolation of Philosophy",
+	"Author" : "Boethius",
+	"PhilosophySubject" : "Philosophy of Religion",
+	"Pages" : 216,
+	"TimePeriod" : "Medieval"
+	},
+	{
+	"BookTitle" : "What's Wrong?  Applied Ethicists and their Critics",
+	"Author" : ["David Boonin", "Graham Oddie"],
+	"PhilosophySubject" : "Applied Ethics",
+	"Pages" : 618,
+	"TimePeriod" : "Contemporary"
+	}]
+}

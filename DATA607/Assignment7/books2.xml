@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<books>
+	<book id="1">
+		<BookTitle>The Republic</BookTitle>
+		<Author>Plato</Author>
+		<PhilosophySubject>Political Philosophy</PhilosophySubject>
+		<Pages>416</Pages>
+		<TimePeriod>Ancient</TimePeriod>
+	</book>
+	<book id="2">
+		<BookTitle>Metaphysics</BookTitle>
+		<Author>Peter Van Inwagen</Author>
+		<PhilosophySubject>Metaphysics</PhilosophySubject>
+		<Pages>329</Pages>
+		<TimePeriod>Contemporary</TimePeriod>
+	</book>
+	<book id="3">
+		<BookTitle>Consolation of Philosophy</BookTitle>
+		<Author>Boethius</Author>
+		<PhilosophySubject>Philosophy of Religion</PhilosophySubject>
+		<Pages>216</Pages>
+		<TimePeriod>Medieval</TimePeriod>
+	</book>
+	<book id="4">
+		<BookTitle>What's Wrong?  Applied Ethicists and their Critics</BookTitle>
+		<Author>
+			<Author1>David Boonin</Author1>
+			<Author2>Graham Oddie</Author2>
+		</Author>
+		<PhilosophySubject>Applied Ethics</PhilosophySubject>
+		<Pages>618</Pages>
+		<TimePeriod>Contemporary</TimePeriod>
+	</book>
+</books>
