@@ -1,0 +1,251 @@
+---
+title: 'Assignment 9: Web APIs'
+author: "Andrew Carson"
+date: "October 28, 2016"
+output:
+  html_document:
+    highlight: tango
+    theme: united
+  pdf_document: default
+always_allow_html: yes
+---
+
+### Task
+The New York Times web site provides a rich set of APIs, as described here: http://developer.nytimes.com/docs
+
+You'll need to start by signing up for an API key.
+
+Your task is to choose one of the New York Times APIs, construct an interface in R to read in the JSON data, and transform it to an R dataframe.
+
+
+### Get Data from API
+
+I chose to get a key for the Article Search API.  First, I need to specify a query.  Since I studied philosophy in graduate school, I am going to search for "philosophy" as the keyword from January 01, 2016 through October 01, 2016.  
+
+```{r,eval=TRUE, message=FALSE}
+library(jsonlite)
+library(tidyr)
+library(dplyr)
+```
+
+```{r,eval=FALSE}
+apikey<-"?api-key=046721d6539e4338a818eb9e1d199ac9"
+
+#query - search for philosophy articles
+q<-"&q=philosophy"
+
+#begin date
+begin_date<-"&begin_date=20160101"
+
+#end date
+end_date<-"&end_date=20161001"
+
+#sort
+sort<-"&sort=oldest"
+
+#page
+page<-"&page=0"
+
+#get documents
+docs<-fromJSON(
+    paste0("https://api.nytimes.com/svc/search/v2/articlesearch.json"
+           ,apikey
+           ,q
+           ,begin_date
+           ,end_date
+           ,sort
+           ,page
+            )
+          )
+
+#see number of hits
+docs$response$meta$hits
+
+
+```
+
+I see that I have 1336 hits.  So I am going to create a loop to pull in all of those hits into a data frame.  Since I have 10 responses per page, to get all 1336 hits, I need to loop from 0 to 133 times (133*10 = 1330).  So as to not have to repull the data, I save the data into a .csv file for future use.
+
+```{r, eval=FALSE}
+#initialize df
+df<-c()
+
+#loop
+for(i in 0: 133){
+
+#page
+page<-paste0("&page=",i)
+
+#try
+try(
+  {
+
+  #get documents
+  docs<-fromJSON(
+      paste0("https://api.nytimes.com/svc/search/v2/articlesearch.json"
+             ,apikey
+             ,q
+             ,begin_date
+             ,end_date
+             ,sort
+             ,page
+              )
+            )
+    
+  #get data.frames
+  temp<-docs$response$docs
+  headline<-docs$response$docs$headline
+  
+  #select columns and remove row.names
+  temp<-select(temp,web_url,snippet,lead_paragraph,abstract,print_page,source,pub_date,document_type,news_desk,section_name,subsection_name,type_of_material,word_count)
+  headline<-select(headline, main, print_headline)
+  
+  temp<-data.frame(temp, row.names = NULL, stringsAsFactors = FALSE)
+  headline<-data.frame(headline,row.names = NULL, stringsAsFactors = FALSE)
+  
+  #combine into one data.frame
+  temp<-cbind(temp,headline)
+  
+  #bind to previous data
+  df<-rbind(df,temp)
+  
+  #sleep-5 seconds to comply with rate limit
+  Sys.sleep(5)
+
+}, silent = TRUE)
+
+
+#print i and rows to monitor progress
+print(c(i, nrow(df)))
+
+}
+
+#view column names
+data.frame(names(df))
+
+#write results to csv to save for use
+write.csv(df,file = "C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/assignment9_df.csv")
+
+```
+
+Due to errors that would occur and stop my code (e.g., accessing a forbidden directory), I had to wrap my code in a `try` statement.  And to not hit the server too many times and get another error code due to rate limitations, I added a 5 second crawl delay and that solved the error.  Also, I only returned 960 results in the code above because I had hit my rate limit for the day (i.e., 1000 returns.  I had used 40 already for getting the code running and tested).
+
+The dataframe contains 960 observations with 15 columns.  The column names are:
+
+1. web_url
+2. snippet
+3. lead_paragraph
+4. abstract
+5. print_page
+6. source
+7. pub_date
+8. document_type
+9. news_desk
+10. section_name
+11. subsection_name
+12. type_of_material
+13. word_count
+14. main
+15. print_headline
+
+
+
+### Quick Analysis
+The dates range from January 1, 2016 through July 17, 2016.  Most of the results are articles (873), followed by blogposts (79).  
+
+```{r, eval=TRUE}
+df<-read.csv("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/assignment9_df.csv", stringsAsFactors = FALSE)
+df$X<-NULL
+
+#see date range
+date_range<-df %>% select(pub_date) %>% arrange(pub_date)
+head(date_range)
+tail(date_range)
+
+#see document types
+table(df$document_type)
+```
+
+The use of the word `philosophy` can be found in all sections.  The most popular `news_desk` after "none" is the "OpEd" section followed by "Sports".  For `section_name`, "Sports", "U.S.", and "Opinion" make the top three.  "News", "Blog", and "Review" are the top `type_of_material`.  We also see lots of "Paid Death Notice" and "Obituary" entries.
+```{r}
+#see news_desk
+head(arrange(data.frame(table(df$news_desk)),desc(Freq)))
+
+#see section_name
+head(arrange(data.frame(table(df$section_name)),desc(Freq)))
+
+#see type_of_material
+head(arrange(data.frame(table(df$type_of_material)),desc(Freq)))
+
+```
+The most words in any hit are 22572, which comes from the transcript of the Republican debate in March.  The shortest comes from a video in which "Shaun talks about his training philosophy."
+
+```{r}
+#max word count
+max(df$word_count, na.rm = TRUE)
+subset(df,word_count == 22572)
+
+#min word count
+min(df$word_count, na.rm = TRUE)
+subset(df,word_count == 6)
+
+```
+
+### Philosophy
+What are the most common words in this collection of articles?  That is, what is `philosophy` associated with?  I use the words from the `lead_paragraph` to find out.
+
+```{r, message=FALSE}
+library(tm)
+library(stringr)
+
+text_all_df<-c()
+
+for(i in 1:nrow(df)){
+
+#remove punctuation
+text<-str_replace_all(df$lead_paragraph[i],"[:punct:]","")
+
+#tolower
+text<-tolower(text)
+
+#remove stop words
+text<-removeWords(text, stopwords('english'))
+
+#split text
+text_split<-unlist(str_split(text," "))
+
+#remove blanks
+text_clean<-
+  text_split[!text_split==""]
+
+if(length(text_clean)>0) {
+    #combine with dataframe
+    text_clean<-cbind(i,text_clean)
+    text_all_df<-rbind(text_all_df, text_clean)
+    }
+}
+
+text_all_df<-data.frame(text_all_df, stringsAsFactors = FALSE)
+names(text_all_df)<-c("article","word")
+
+#show first 10 words
+head(text_all_df, n=10)
+```
+
+
+The top 10 words include "new", "university", "philosophy", and "years".  A word cloud is also below with all words that have counts of 25 or more.
+```{r, message = FALSE}
+#see top words
+top_words<-data.frame(table(text_all_df$word), stringsAsFactors = FALSE)
+head(arrange(top_words,desc(Freq)), n = 10)
+
+#create wordcloud
+library(wordcloud)
+wordcloud(top_words$Var1, top_words$Freq, min.freq=25,colors=brewer.pal(6, "Dark2"),scale=c(4, .1))
+
+```
+
+We see that "new" and "york" are common, as we might expect.  The fact that philosophy is an academic discipline can help explain "university", "professor", "students", and "school".  We can also see evidence of the obituaries in words like "born", "survived", "died", "years",and "life".  There is also evidence of more political topics shown by "president", "united", "american".  Finally, we can take philosophy to be a description of one's way of life, probably related to the obituaries: "love", "friends", "service", "work", and "beloved".
+
+In short, "philosophy" is associated with many kinds of articles covering a wide variety of topics in the New York Times article api.
+
