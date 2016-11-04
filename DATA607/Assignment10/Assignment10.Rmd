@@ -1,0 +1,214 @@
+---
+title: 'Assignment 10: Document Classification'
+author: "Andrew Carson"
+date: "November 6, 2016"
+output:
+  html_document:
+    highlight: tango
+    theme: united
+  pdf_document: default
+always_allow_html: yes
+---
+
+### Task
+
+It can be useful to be able to classify new "test" documents using already classified "training" documents. A common example is using a corpus of labeled spam and ham (non-spam) e-mails to predict whether or not a new document is spam.
+
+For this project, you can start with a spam/ham dataset, then predict the class of new documents (either withheld from the training dataset or from another source such as your own spam folder).  One example corpus: https://spamassassin.apache.org/publiccorpus/
+
+### Solution
+I referenced chapter 10 from *Automated Data Collection with R* and the website https://www.r-bloggers.com/classifying-emails-as-spam-or-ham-using-rtexttools/ to build out my solution.  So any code that mimics what is found in these resources is due to my direct use of them.  Consequently, I note them above to give them proper credit.
+
+I downloaded the `20021010_easy_ham.tar.bz2` and `20021010_spam.tar.bz2` files from the above website.  After unzipping, I had 2551 "ham" emails and 500 "spam" emails (I removed the file names file) to build my corpus.  After examining the code for the website mentioned above and examining the emails directly, it appears that the message for the email is always after the first blank line in the file.  So this is the part of the file that I want to capture to build the term document matrix on.  Because the "spam" emails contain some non-english words, the initial attempt to pull the data fails.  After adding a try statement, it succeeds.
+
+```{r, message = FALSE, warning = FALSE}
+library(tm)
+library(RTextTools)
+library(stringr)
+library(SnowballC)
+
+#get directories
+ham<-"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/Assignment10/easy_ham/"
+spam<-"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/Assignment10/spam/"
+
+#get file names
+ham_names<-dir(ham)
+spam_names<-dir(spam)
+
+#get email messages
+#ham
+ham_message<-c()
+for(i in 1:length(ham_names)) {
+  file<-paste0(ham,ham_names[i])
+  connection <- file(file, open="rt", encoding="latin1")
+  text <- readLines(connection)
+  msg <- text[seq(which(text=="")[1]+1,length(text),1)]
+  close(connection)
+  vector<-c(i,paste(msg, collapse=" "))
+  ham_message<-rbind(ham_message,vector)
+}
+
+ham_df<-data.frame(ham_message, stringsAsFactors = FALSE, row.names = NULL)
+  
+#spam
+spam_message<-c()
+for(i in 1:length(spam_names)) {
+  file<-paste0(spam,spam_names[i])
+  connection <- file(file, open="rt", encoding="latin1")
+  text <- readLines(connection)
+  msg <- try(text[seq(which(text=="")[1]+1,length(text),1)], silent = TRUE)
+  close(connection)
+  vector<-c(i,paste(msg, collapse=" "))
+  spam_message<-rbind(spam_message,vector)
+}
+
+spam_df<-data.frame(spam_message, stringsAsFactors = FALSE, row.names = NULL)
+spam_df<-spam_df[which(str_detect(str_sub(spam_df$X2,1,5), "Error") == FALSE),]
+```
+
+The "spam" emails had 5 messages that couldn't be processed due to non-ASCII characters, leaving me with 496 "spam" emails to work with.  That means we have 496/2551 = 19.4% spam messages in our data. I create corpuses for the "ham" and "spam" messages, add a label `spam` in the metadata for each (0 for ham, 1 for spam), and then I create a final corpus of both data sets.
+
+```{r}
+
+#create corpuses
+ham_corpus<-Corpus(VectorSource(ham_df$X2))
+spam_corpus<-Corpus(VectorSource(spam_df$X2))
+
+#add label in metadata
+for(i in 1:length(ham_corpus)){
+  meta(ham_corpus[[i]], "spam")<-0
+}
+
+for(i in 1:length(spam_corpus)){
+  meta(spam_corpus[[i]], "spam")<-1
+}
+
+#create final corpus
+final<-c(ham_corpus,spam_corpus)
+```
+
+Now I can do cleanup of the data.  I remove numbers, punctuation (adding whitespace using the code from Chapter 10), and stopwords.  I make the text all lower case and do a stemming step.
+
+```{r}
+#remove numbers
+final<-tm_map(final, removeNumbers)
+
+#remove punctuation
+# use content_transformer to deal with error
+#note: http://stackoverflow.com/questions/24191728/documenttermmatrix-error-on-corpus-argument
+final<-tm_map(final, content_transformer(str_replace_all), pattern = "[[:punct:]]", replacement = " ")
+
+#remove stopwords
+final<-tm_map(final, removeWords, words = stopwords("en"))
+
+#make lowercase
+final<-tm_map(final, content_transformer(tolower))
+
+#stemming
+final<-tm_map(final, stemDocument)
+
+```
+
+Now I can create a term-document matrix of the final corpus of the combined "spam" and "ham" messages.  Since there is 100% sparsity, I will remove the sparse terms.  I will only keep words that have less than .99 sparsity.  This brings us down to 96% sparsity.
+
+```{r}
+#create term document matrix
+tdm<-TermDocumentMatrix(final)
+tdm
+
+#remove sparse terms
+tdm<-removeSparseTerms(tdm, .99)
+tdm
+
+```
+
+Now we can use the `RTextTools` package to do some predictions of ham or spam.  We first have to create a DocumentTermMatrix (the needed input for `RTextTools`).  Then I remove the sparse terms again and get the labels for the emails (spam or ham) that was stored in the meta data.  I do a 70/30 split of the data in order to have separate training and test datasets that have both ham and spam in them.  
+
+```{r}
+
+#create document term matrix
+#create term document matrix
+dtm<-DocumentTermMatrix(final)
+dtm
+
+#remove sparse terms
+dtm<-removeSparseTerms(dtm, .99)
+dtm
+
+#get labels
+label<-c()
+for(i in 1:length(final)){
+  label<-c(label,final[[i]]$meta$spam)
+}
+
+#create 70/30 split of data
+set.seed(10)
+probs<-runif(length(final),0,1)
+train<-which(probs<=.70)
+test<-which(probs>.70)
+```
+
+Once we have created the split, we can create a container for the data, which provides the needed structure to perform the prediction.  Finally, I use the `MAXENT` classifier to make the predictions of the test data.
+
+```{r}
+#create container
+container <-create_container(dtm
+                             ,labels = label
+                             ,trainSize = train
+                             ,testSize = test
+                             ,virgin = FALSE
+                             )
+
+#predictions
+maxent_model<-train_model(container, "MAXENT")
+maxent_out<-classify_model(container, maxent_model)
+
+head(maxent_out)
+```
+
+How well did the classifier do?  We can look at several measures.  First, we see the confusion matrix.  When I ran this, only 14 of the 955 emails in the test set was misclassified for an accuracy of 98%.  The AUC was 0.97, so the model did a pretty good job of classifying the spam and ham.
+
+```{r, message = FALSE, warning=FALSE}
+library(SDMTools)
+library(pROC)
+
+#create data frame for confusion matrix
+labels_out<-data.frame(correct_label = label[test],maxent = maxent_out[,1])
+
+#output confusion matrix
+confusion.matrix(labels_out$correct_label, labels_out$maxent)
+
+#view accuaracy, auc, etc.
+accuracy(labels_out$correct_label, labels_out$maxent)
+
+#roc curve
+roc_curve<-roc(labels_out$correct_label, as.numeric(as.character(maxent_out[,1])))
+plot(roc_curve)
+
+```
+### Exploratory
+
+Which words signal spam?  While I couldn't find any documenation to explain `Weight` in the `maxent_model@weights`, it appears that the extreme values (positive or negative) are the most important words.  I match the terms from `dtm$dimnames$Terms` to the output of `maxent_model@weights` using the `Feature` column, and then arrange by the `Weight` to get the most important words.  I show the top 15 terms by `Weight`.
+
+```{r, message = FALSE}
+library(tidyr)
+library(dplyr)
+
+#get model weights
+maxent_df<-maxent_model@weights
+maxent_df$Weight_Adj<-as.numeric(as.character(maxent_df$Weight))
+maxent_df$Feature_Adj<-as.numeric(as.character(maxent_df$Feature))
+
+#get terms
+maxent_df$Terms<-dtm$dimnames$Terms[maxent_df$Feature_Adj]
+
+#view top terms by weight
+head(arrange(maxent_df, desc(Weight_Adj)), n =15)
+
+```
+
+If I have interpreted this correctly, on top we see that "wrote", "url", and "date" appear to signal `ham` while "internet", "order", and "remove" signal `spam`.  For spam, "order" could signal money order (as "money" appears lower in the list), and "remov" could be part of "if you wish to be removed from this mailing list...".  So there is some intuitive plausibility to this result.
+
+### Conclusion
+
+I have shown that emails can be classified as `spam` and `ham` using the `tm` and `RTextTools` packages, and that such classification is very effective on the data being used.
