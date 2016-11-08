@@ -1,0 +1,98 @@
+---
+title: 'Discussion 11: Recommender Systems'
+author: "Andrew Carson"
+date: "November 10, 2016"
+output:
+  html_document:
+    highlight: tango
+    theme: united
+  pdf_document: default
+always_allow_html: yes
+---
+
+### Task
+
+Your task is to analyze an existing recommender system that you find interesting.  You should:
+
+1. Perform a Scenario Design analysis as described below.  Consider whether it makes sense for your selected recommender system to perform scenario design twice, once for the organization (e.g. Amazon.com) and once for the organization's customers. 
+
+2. Attempt to reverse engineer what you can about the site, from the site interface and any available information that you can find on the Internet or elsewhere. 
+
+3. Include specific recommendations about how to improve the site's recommendation capabilities going forward.  
+
+4. Create your report using an R Markdown file, and create a discussion thread with a link to the GitHub repo where your Markdown file notebook resides.  You are not expected to need to write code for this discussion assignment. 
+
+Here are two examples of the kinds of papers that might be helpful backgrounders for your research in #2 above (if you had chosen amazon.com or nytimes.com as your web site):
+
++ Greg Linden, Brent Smith, and Jeremy York, "Amazon.com Recommendations:  Item-to-Item Collaborative Filtering,"  IEEE Internet Computing, 2003(!). https://datajobs.com/data-science-repo/Recommender-Systems-[Amazon].pdf 
+
++ Alex Spangher, "Building the Next New York Times Recommendation Engine", Aug 11, 2015. http://open.blogs.nytimes.com/2015/08/11/building-the-next-new-york-times-recommendation-engine/ 
+
+Your task is to:
+
+1. Identify a recommender system web site, then 
+
+2. Answer the three scenario design questions for this web site.   
+
+This process of guessing/reverse engineering, while inexact, will help you build out your own ability to better account for "user needs" in designing recommender systems going forward.  Being able to place the customer first in your mind is a "soft skill" that is highly valued in the technical marketplace.
+
+You may work in a small group on this discussion assignment!  Please make your initial post (which includes a link to your GitHub hosted R Markdown file before our meetup on Thursday November 10th, and provide feedback to at least one of your class mates' posts before end of day on Sunday November 13th.
+
+Your feedback should include at least one additional reference and/or constructive suggestion.
+
+
+### Solution
+
+In "honor" of the US Presidential election, the recommender system website I chose was:
+
++ http://www.isidewith.com/
+
+The site asks users a series of questions related to political issues along with a weighting for "how important is this to you?".  After answering the questions, the Presidential candidate that best matches how one has answered the quiz is output as a recommendation for how one should vote.  For example, if my answers are most similar to the positions taken by Hillary Clinton (say 70%), followed by Gary Johnson (65%), then I should vote for Hillary Clinton as she is the candidate that best matches my political beliefs.
+
+#### 1. Scenario Design
+
+Here are the scenario design questions with answers:
+
+1. What are the target users?
+
+    Answer: Likely US voters that are unsure of who to vote for or how their political beliefs match those beliefs of the candidates/parties running for the Presidency of the United States.
+
+2. What are their key goals?
+    
+    Answer: to determine who they should vote for based on how similar their political beliefs are to the various candidates running for the office of the president.  To learn more about the political views of the various candidates running for office.
+
+3. How can I help them accomplish their goals?
+
+    Answer: select topics for use in the quiz that cover the entire range of important political issues, especially those on which the candidates differ, so that users can get an accurate portroyal of how their political beliefs match to the many different presidential candidates.  To do this well, one needs to know which political topics are most important, what the range of issues are, and which kinds of questions are going to be the most useful in conveying information about candidates to the users.  In other words, what topical questions are going to be the most predictive of the candidate a user would choose if he or she were to answer an exhaustive series of questions about political topics?
+    
+I think it does make sense to do scenario design twice.  The above is focused on the user's needs and interests, but we also need to know what the organization's needs and interests are.  Based on what I could find on the website:
+
+1. What are the target users?
+
+    Answer: voters that are not quite as engaged or educated on politics as they could be but are ready for more engagement and education provided the right opportunities.
+  
+2. What is the organization's key goals?
+
+    Answer: to engage more voters and more easily summarize the positions of candidates for voters.
+
+3. How can I help them accomplish their goals?
+
+    Answer: figure out how to market the website to unengaged voters.  Determine the profile of the unengaged voters and from that, figure out how to reach that voter.  Means of doing this would likely be through social media like Facebook, or targeted advertisements on frequented websites.
+  
+
+#### 2: Reverse Engineer
+
+The details of how the recommendations work are on this page:
+http://www.isidewith.com/faqs/
+
+In short, users answer questions and weight their answers.  The more questions that are answered, the more accurate the recommendation is.  The answers to their questions are matched to the responses and weighting given by the candidates as determined by the site owners.  The site owners determine this information by looking at news articles, voting records, interviews, party platforms, and other sources of information about the candidate.  
+
+So I imagine that the site's algorithm does something like this.  A similarity matching between the user and the various candidates, probably using some sort of distance calculation, is done.  For each question or topic, how "close" my answer is to those answers for each candidate is calculated along with the weighting of importance of that question to make that distance more or less significant.  At the end of the quiz, the candidate that I am closest to is the one whose sum of weighted distance measures is the smallest.
+
+#### 3. Recommendations for Improvement
+
+I am not sure if or how the site gathers demographic or other information about its users.  There is a login feature, so perhaps using social media logins the site can get more information about its users.  That would be helpful in terms of providing other predictive information apart from that given in the quiz.  For example, if women are much more likely to vote for Clinton regardless of how they might answer questions on the quiz, that could be useful for predicting how they will vote.  Although that might reveal an interesting discrepancy between how one should vote (according to the issues) and how one will vote (issues and other factors considered).  This could then suggest that other questions need to be added to the quiz in order to make these other factors more explicit.
+
+Also, if the site is only being used by a certain demographic, then that would undermine the organization's goals of engaging voters.  Consequently, understanding who is using the site will provide crucial information for the development of a successful marketing and outreach strategy to reach those potential users that are not currently using the site.
+
+
