@@ -1,0 +1,181 @@
+---
+title: 'Project 4: NoSQL migration'
+  
+author: "Andrew Carson"
+date: "November 17, 2016"
+output:
+  html_document:
+    highlight: tango
+    theme: united
+  pdf_document: default
+always_allow_html: yes
+---
+
+### Task
+
+For Project 4, you should take information from a relational database and migrate it to a NoSQL database of your own choosing.  
+
+For the relational database, you might use the flights database, the tb database, the "data skills" database your team created for Project 3, or another database of your own choosing or creation.
+
+For the NoSQL database, you may use MongoDB, Neo4j (which we introduce in Week 12), or another NoSQL database of your choosing.
+
+ Your migration process needs to be reproducible.  R code is encouraged, but not required.  You should also briefly describe the advantages and disadvantages of storing the data in a relational database vs. your NoSQL database.
+
+You may work on a small team on this project.  Due before our Meetup on Thursday November 17th.
+
+### Solution
+
+#### Set up MongoDB
+
+I chose to go with MongoDB.  To install and set up mongoDB, I followed the instructions located here: `https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/`
+
+This was also a very useful website:
+`http://www.tutorialspoint.com/mongodb/mongodb_quick_guide.htm`
+
+For understanding `RMongo`, I relied heavily on the documentation:
+`https://cran.r-project.org/web/packages/RMongo/RMongo.pdf`
+
+#### Relational Database: MySQL Flights Data
+
+As I already have the flights database stored in MySQL, I will use it.  There are 5 tables in the flights database: airlines, airports, flights, planes, and weather.  I will migrate each of these into MongoDB using R code.
+
+First, load the RMySQL library.
+```{r, eval=FALSE}
+library('RMySQL')
+```
+
+Then connect to the MySQL database (Note: password has been changed to "password") and change to the "flights" database.
+```{r, eval=FALSE}
+mydb <- dbConnect(MySQL(), user='root', password='password', host='localhost')
+dbSendQuery(mydb, "USE flights")
+```
+
+Then pull in the flights tables dataframes.
+```{r, eval=FALSE}
+airlines<-dbGetQuery(mydb,"SELECT * FROM airlines;")
+airlines$name<-str_replace(airlines$name,"\\r","") #get rid of returns in data
+
+airports<-dbGetQuery(mydb,"SELECT * FROM airports;")
+flights<-dbGetQuery(mydb,"SELECT * FROM flights;")
+planes<-dbGetQuery(mydb,"SELECT * FROM planes;")
+weather<-dbGetQuery(mydb,"SELECT * FROM weather;")
+
+```
+
+As we no longer need to connect to MySQL, disconnect the connection and clean up.
+```{r, eval=FALSE}
+dbDisconnect(mydb)
+mydb<-NA
+
+#detach RMySQL to prevent masking of functions below
+detach("package:RMySQL", unload=TRUE)
+```
+
+#### MongoDB
+
+Now that we have the data in R, we need to put it into MongoDB.  First, we need to make sure the server is running.  In the default installation, the application is kept in `C:\Program Files\MongoDB\Server\3.2\bin`.  To start the server, we run the `mongod` application.  Then we need to create a `flights` database, so we create that by starting `mongo.exe` and typing in `use flights`.  Now we can begin inserting the flights tables as collections into the flights db in MongoDB.
+
+```{r, eval=FALSE}
+library(RMongo)
+library(jsonlite)
+library(stringr)
+
+#start server running before trying code
+#connect to db
+mongo <- mongoDbConnect("flights", "localhost", 27017)
+
+
+#insert tables as collections
+#insert each row from df as a mongoDB document
+
+#create function for inputing data
+insert_json<-function(connection,db,df){
+  
+  #convert df row to json mongodb document
+  df_json<-toJSON(df)
+  
+  #clean up
+  df_json<-sub("[","",df_json, fixed = TRUE)
+  df_json<-sub("]","",df_json, fixed = TRUE)
+  df_json<-as.character(df_json)
+  
+  #insert document
+  dbInsertDocument(connection, db, df_json)
+  
+}
+
+#call the function for each dataframe/collection to insert rows/documents
+#airlines
+for(i in 1:nrow(airlines)) {
+  insert_json(mongo,"airlines",airlines[i,])
+}
+
+#airports
+for(i in 1:nrow(airports)) {
+  insert_json(mongo,"airports",airports[i,])
+}
+
+#flights
+for(i in 1:nrow(flights)) {
+  insert_json(mongo,"flights",flights[i,])
+  print(i) #monitor progress. Took 20 minutes on my machine
+}
+
+#planes
+for(i in 1:nrow(planes)) {
+  insert_json(mongo,"planes",planes[i,])
+}
+
+#weather
+for(i in 1:nrow(weather)) {
+  insert_json(mongo,"weather",weather[i,])
+}
+
+#close the connection
+dbDisconnect(mongo)
+
+```
+
+#### Exploratory
+We should confirm that the data was correctly input and that we can query the collections (i.e., tables) in mongoDB.  Here are some example queries:  
+
+```{r, eval=TRUE, message = FALSE, warning = FALSE}
+library(RMongo)
+library(knitr)
+
+#connect to db
+mongo <- mongoDbConnect("flights", "localhost", 27017)
+
+#show results from query
+kable(dbGetQuery(mongo, "airlines",'{"carrier": "9E"}')) #find carrier with code "9E"
+kable(dbGetQuery(mongo, "airports",'{"lat": {$gt:70}}')) #find all airports with latitude above 70
+kable(dbGetQuery(mongo, "flights",'{"distance": {$lt:30}}')) #find all flights with distance less than 30 miles
+```
+
+I first thought the above result from `flights` was a transformation issue, since many fields from the query were not being returned.  Actually, many of those fields are `NULL`  in the flights dataframe, so they were not put into MongoDB, and hence, not returned.  MongoDB has no need to store `NULL` values.  So the query does return correctly from MongoDB.  
+
+Here is another example from `flights` to show all of the fields.  Two other queries from `planes` and `weather` are also shown.
+
+```{r}
+
+kable(dbGetQuery(mongo, "flights",'{$and:[{"distance":80},{"dep_delay":{$lte:-5}}]}')) #find all 80 mile flights that departed 5 minutes early or earlier
+kable(dbGetQuery(mongo, "planes",'{$and:[{"year": {$lt:1970}},{"engines":4}]}')) #find all planes that are older than 1970 and have 4 engines
+kable(dbGetQuery(mongo, "weather",'{$or:[{"wind_gusts": {$gt:1000}},{"wind_speed":{$gt:1000}}]}')) #find all flights in which wind gusts or wind speed were over 1000
+
+#close the connection
+dbDisconnect(mongo)
+
+```
+
+The data was successfully moved and can be queried.
+
+### Advantages/Disadvantages of SQL vs. NOSQL
+
+The main advantage of using NoSQL is that the schema doesn't have to change and the data types do not have to be consistent.  In so doing, it is easy to scale.  Also, one can avoid large sparse tables since we are always using key-value pairs where the value is not NULL.  It also appears that one can avoid the need for joins if properly set up, since information can be nested in the JSON style of documents.  Finally, the data can be "sharded", that is, split onto many machines to increase read and write speeds and to solve data storage limitations.  Thus, it can serve as a "big data" option.
+
+A disadvantage that I see is that it is harder to view the data in its entirety.  We are so used to seeing data in a tabular form.  We cannot directly see what the table looks like in its column names, typical values, etc.  Also, traditional methods of analysis rely on a tabular structure for input, so the data would have to be transformed before use in these methods.  Finally, there is a lot of upfront work to convert data from the traditional tabular format into the key-value pair format.  For example, to truly move the data from the `flights` database, I would need to do a massive join on the data to relate it inside the mongoDB database.  Or I'd have to do a lot of work to translate it into JSON nested formats before inserting it into mongoDB.  I suppose I would need to do more research on how people do this in practice.
+
+For me, this assignment was particular challenging because the data transformation from tabular data frames to JSON collections took quite a while to work bug free due to syntax and formating challenges.  Furthermore, it took a while to figure out the mapping of relational database terms to mongoDB terms (e.g., tables -> collection, row -> document).  It would be nice if similar concepts could use similar names across all data storage systems.
+
+Overall, I think the challenges I faced are more a reflection on my unfamiliarty with this style of data storage.  With time and practice, I am sure these NoSQL concepts and methods of data storage and retrieval would become as intuitive and easy as the traditional SQL/tabular methods I am used to.  
+
