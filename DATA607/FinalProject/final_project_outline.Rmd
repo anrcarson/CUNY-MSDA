@@ -1,0 +1,138 @@
+---
+title: "Final Project Outline"
+author: "Andrew Carson"
+date: "November 15, 2016"
+output: html_document
+---
+#### Data Sources
+
+Total votes and percentages by state for presidency
+
++ http://www.presidency.ucsb.edu/showelection.php?year=2012
+  
+US State and National Population
+
++ http://www.census.gov/popest/data/national/totals/pre-1980/tables/popclockest.txt
++ http://www.census.gov/popest/data/state/asrh/1980s/80s_st_totals.html
++ http://www.census.gov/popest/data/state/totals/1990s/tables/ST-99-03.txt
+
+
+#### Proposal describes your motivation for performing this analysis.
+
+Analysis:
+
++ To compare voting trends by state and nationally from 1900 through 2016 with population trends by state and nationally from 1900 through 2016.
+  
+Motivation:
+
++ To understand more fully the relationship between state population and party preference as well as voter turnout.  Are there detectable trends?  How might we better understand the population growth of the United States in relationship to presidential election voting?
+  
+  
+Proposal:
+
++ Do state populations bear any relationship to state voter turnouts and party selections in presidential elections?  What can we learn about voter turnout and state party preference based on state populations?  I intend to answer these questions in my exploration of state population data from 1900 through 2016 in comparison to state voting percentages and party selection from 1900 through 2016.  I will use census data and federal elections data to do the analysis.  This data is available on the web.  I will download, clean, transform, analyze, and visalize the data using R and R Markdown.
+  
+  
+
+#### Your project has a recognizable "data science workflow," such as the OSEMN workflow or Hadley Wickham's Grammar of Data Science. [Example: First the data is acquired, then necessary transformations and clean-up are performed, then the analysis and presentation work is performed]
+
+Workflow: gather data, clean data, transform data, analyze data, draw conclusions from data, visualize and report data and conclusions.
+
+
+#### Project includes data from at least two different types of data sources (e.g., two or more of these: relational or CSV, Neo4J, web page [scraped or API], MongoDB, etc.)
+
+Sources: 
+
+1. Web page scraping (presidency voting by state website)
+2. CSV/TXT files (census data on population by state)
+
+#### Project includes at least one data transformation operation. [Examples: transforming from wide to long; converting columns to date format]
+
+Data transformation will need to occur on population data to get data for each state and year combination into a single table.
+
+#### Project includes at least one statistical analysis and at least one graphics that describes or validates your data.
+
+Statistical analysis:
+
++ show summaries (means, sd, IQR, etc.) of population percentages in relation to US population.
+
+  
+Graphics:
+
++ show table head to validate that data is in R.  
++ Show top values, bottom values for population percentages and voter turnout.
+
+
+#### Project includes at least one graphic that supports your conclusion(s).
+Graphics:
+
++ show population changes over time in a map of US
++ show how population correlates to party preference (box plot, scatterplot)
++ show how state population percentage of US total correlates to voter turnout percentage
+
+
+#### Project includes at least one statistical analysis that supports your conclusion(s).
+
+Statistical analysis: 
+
++ does population percentage correlate to party preference?
++ does state population percentage of US total correlates to voter turnout percentage?
++ can party (Republican or Democrat) selection be determined by state population percentage as compared with US population?
+
+
+#### Project includes at least one feature that we did not cover in class!There are many examples: "I used ggmap; I created a decision tree; I ranked the results; I created my presentation slides directly from R; I figured out to use OAuth 2.0."
+
+New features:
+
++ explore ggmap or another mapping package to show trends over time in state population changes and also party voting changes
++ attempt to build a shiny app to allow better interaction with the data
+
+#### Presentation. Was the presentation delivered in the allotted time (3 to 5 minutes)?
+
+We will practice to make sure we are under 5 minutes in our presentation.
+
+
+#### Presentation. Did you show (at least) one challenge you encountered in code and/or data, and what you did when you encountered that challenge? If you didn't encounter any challenges, your assignment was clearly too easy for you!
+
+Forseeable challenges:
+
++ automating data pulls from many text files so as to avoid manual downloads and to make the process repeatable.
+
+
+#### Presentation. Did the audience come away with a clear understanding of your motivation for undertaking the project?
+
+TBD
+
+#### Presentation. Did the audience come away with a clear understanding of at least one insight you gained or conclusion you reached or hypothesis you "confirmed" (rejected or failed to reject.)?
+
+TBD
+
+#### Code and data. Have you delivered the submitted code and data where it is self-contained-preferably in rpubs.com and github? Am I able to fully reproduce your results with what you've delivered? You won't receive full credit if your code references data on your local machine!
+
+To do:
+
++ create Github directory to store data
++ publish in rpubs
++ make sure all code and data is available directly from web and that code can run directly without downloading or installation issues.
+
+#### Code and data. Does all of the delivered code run without errors?
+
+TBD
+
+#### Code and data. Have you delivered your code and conclusions using a "reproducible research" tool such as RMarkdown?
+
+Will be using RMarkdown
+
+#### Deadline management. Were your draft project proposal, project, and presentation delivered on time? Any part of the project that is turned in late will receive a maximum grade of 80%. Please turn in your work on time!You are of course welcome to deliver ahead of schedule!
+
+Proposal:
+
++ Due November 17th
+
+Project:
+
++ Due December 18th
+  
+Presentation:
+
++ Due December 22nd
