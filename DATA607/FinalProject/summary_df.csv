@@ -1,0 +1,141 @@
+,Year,Party,President,VicePresident,ElectoralVote,ElectoralPerc,PopularVote,PopularPerc
+1,1789, unofficially Federalist,George Washington,NA,69,100%,NA,NA
+2,1792, unofficially Federalist,George Washington,NA,132,100%,NA,NA
+3,1796, Federalist,John Adams,NA,71,51.10%,NA,NA
+4,1796, Democratic-Republican,Thomas Jefferson,NA,68,48.90%,NA,NA
+5,1800, Democratic-Republican,Thomas Jefferson,NA,73,52.90%,NA,NA
+6,1800, Federalist,John Adams,NA,65,47.10%,NA,NA
+7,1804, Democratic-Republican,Thomas Jefferson,George Clinton,162,92.00%,NA,NA
+8,1804, Federalist,Charles Pinckney,Rufus King,14,8.00%,NA,NA
+9,1808, Democratic-Republican,James Madison,George Clinton,122,69.70%,NA,NA
+10,1808, Federalist,Charles Pinckney,Rufus King,47,26.90%,NA,NA
+11,1812, Democratic-Republican,James Madison,Elbridge Gerry,128,58.70%,NA,NA
+12,1812, Federalist,DeWitt Clinton,Jared Ingersoll,89,40.80%,NA,NA
+13,1816, Democratic-Republican,James Monroe,Daniel D. Tompkins,183,83.90%,NA,NA
+14,1816, Federalist,Rufus King,John Howard,34,15.60%,NA,NA
+15,1820, Democratic-Republican,James Monroe,Daniel D. Tompkins,231,98.30%,NA,NA
+16,1820, Independent,John Quincy Adams1,none,1,0.40%,NA,NA
+17,1824, Democratic-Republican,Andrew Jackson,John C. Calhoun,99,37.90%,"151,271",41.30%
+18,1824, Democratic-Republican,John Quincy Adams,John C. Calhoun,84,32.20%,"113,122",30.90%
+19,1824, Democratic-Republican,William H. Crawford,Nathaniel Macon,41,15.70%,"40,856",11.20%
+20,1824, Democratic-Republican,Henry Clay,Nathan Sanford,37,14.20%,"47,531", 13.0%
+21,1828, Democratic,Andrew Jackson,John C. Calhoun,178,68.20%,"642,553",56.10%
+22,1828, National-Republican,John Quincy Adams,Richard Rush,83,31.80%,"500,897",43.60%
+23,1832, Democratic,Andrew Jackson,Martin Van Buren,219,76.00%,"701,780",54.20%
+24,1832, National-Republican,Henry Clay,John Sergeant,49,17.00%,"484,205",37.40%
+25,1832, Independent,John Floyd,Henry Lee,11,3.80%,0,0%
+26,1832, Anti-Masonic,William Wirt,Amos Ellmaker,7,2.40%,"100,715", 7.8%
+27,1836, Democratic,Martin Van Buren,Richard Johnson,170,57.80%,"764,176",50.80%
+28,1836, Whig,William Henry Harrison,Francis P. Granger,73,24.80%,"550,816",36.60%
+29,1836, Whig,Hugh Lawson White,John Tyler,26,8.80%,"146,107", 9.7%
+30,1836, Whig,Daniel Webster,Francis P. Granger,14,4.80%,"41,201",2.70%
+31,1836, Whig,Willie Person Mangum,John Tyler,11,3.70%,0,0%
+32,1840, Whig,William Henry Harrison,John Tyler,234,79.60%,"1,275,390",52.90%
+33,1840, Democratic,Martin Van Buren,Richard Johnson,60,20.40%,"1,128,854",46.80%
+34,1844, Democratic,James K. Polk,George M. Dallas,170,61.80%,"1,339,494",49.50%
+35,1844, Whig,Henry Clay,Theodore Frelinghuysen,105,38.20%,"1,300,004",48.10%
+36,1848, Whig,Zachary Taylor,Millard Fillmore,163,56.20%,"1,361,393",47.30%
+37,1848, Democratic,Lewis Cass,William Butler,127,43.80%,"1,223,460",42.50%
+38,1848, Free Soil,Martin Van Buren,"Charles Adams, Sr.",0,0%,"291,501", 10.1%
+39,1852, Democratic,Franklin Pierce,William R. King,254,85.80%,"1,607,510",50.80%
+40,1852, Whig,Winfield Scott,William Graham,42,14.20%,"1,386,942",43.90%
+41,1852, Free Soil,John P. Hale,George Washington Julian,0,0%,"155,210", 4.9%
+42,1856, Democratic,James Buchanan,John C. Breckinridge,174,58.80%,"1,836,072",45.30%
+43,1856, Republican,John C. Fremont,William L. Dayton,114,38.50%,"1,342,345",33.10%
+44,1856, Whig-American,Millard Fillmore,Andrew Jackson Donelson,8,2.70%,"873,053", 21.6%
+45,1860, Republican,Abraham Lincoln,Hannibal Hamlin,180,59.40%,"1,865,908",39.90%
+46,1860, Southern Democratic,John Breckenridge,Joseph Lane,72,23.80%,"848,019",18.10%
+47,1860, Constitutional Union,John Bell,Edward Everett,39,12.90%,"590,901", 12.6%
+48,1860, Democratic,Stephen Douglas,Herschel Johnson,12,4.00%,"1,380,202",29.50%
+49,1864, Republican,Abraham Lincoln,Andrew Johnson,212,90.60%,"2,220,846",55.10%
+50,1864, Democratic,George McClellan,George Pendleton,21,9.00%,"1,809,445",44.90%
+51,1868, Republican,Ulysses S. Grant,Schuyler Colfax,214,72.80%,"3,013,650",52.70%
+52,1868, Democratic,Horatio Seymour,"Francis Blair, Jr.",80,27.20%,"2,708,744",47.30%
+53,1872, Republican,Ulysses S. Grant,Henry Wilson,286,81.90%,"3,598,468",55.60%
+54,1872, Democratic,Horace Greeley,Benjamin Brown,0,0.00%,"2,835,315",43.80%
+55,1876, Republican,Rutherford B. Hayes,William Wheeler,185,50.10%,"4,033,497",48.00%
+56,1876, Democratic,Samuel Tilden,Thomas Hendricks,184,49.90%,"4,288,191",51.00%
+57,1880, Republican,James A. Garfield,Chester A. Arthur,214,58.00%,"4,453,611",48.30%
+58,1880, Democratic,Winfield S. Hancock,William English,155,42.00%,"4,445,256",48.20%
+59,1884, Democratic,Grover Cleveland,Thomas Hendricks,219,54.60%,"4,915,586",48.90%
+60,1884, Republican,James G. Blane,John Logan,182,45.40%,"4,852,916",48.20%
+61,1888, Republican,Benjamin Harrison,Levi Morton,233,58.10%,"5,449,825",47.80%
+62,1888, Democratic,Grover Cleveland,Allen Thurman,168,41.90%,"5,539,118",48.60%
+63,1892, Democratic,Grover Cleveland,Adlai E. Stevenson,277,62.40%,"5,554,617",46.00%
+64,1892, Republican,Benjamin Harrison,Whitelaw Reid,145,32.70%,"5,186,793",43.00%
+65,1892, Populist,James B. Weaver,James Field,22,5.00%,"1,029,357",8.50%
+66,1896, Republican,William McKinley,Garret Hobart,271,61.00%,"7,105,076",51.10%
+67,1896, Democratic,William Jennings Bryan,Sewall/Watson,176,39.60%,"6,370,897",45.80%
+68,1900, Republican,William McKinley,Theodore Roosevelt,292,65.30%,"7,219,193",51.70%
+69,1900, Democratic,William Jennings Bryan,Adlai E. Stevenson,155,34.70%,"6,357,698",45.50%
+70,1904, Republican,Theodore Roosevelt,Charles Fairbanks,336,70.60%,"7,625,599",56.40%
+71,1904, Democratic,Alton B. Parker,Henry Davis,140,29.40%,"5,083,501",37.60%
+72,1908, Republican,William Howard Taft,James S. Sherman,321,66.50%,"7,676,598",51.60%
+73,1908, Democratic,William Jennings Bryan,John Kern,162,33.50%,"6,406,874",43.00%
+74,1912, Democratic,Woodrow Wilson,Thomas R. Marshall,435,81.90%,"6,294,327",41.80%
+75,1912, Progressive,Theodore Roosevelt,Hiram Johnson,88,16.60%,"4,120,207",27.40%
+76,1912, Republican,William Howard Taft,Nicholas Butler,8,1.50%,"3,486,343", 23.2%
+77,1912, Socialist,Eugene V. Debs,Emil Seidel,0,0%,"900,370",6.00%
+78,1916, Democratic,Woodrow Wilson,Thomas Marshall,277,52.20%,"9,126,063",49.20%
+79,1916, Republican,Charles E. Hughes,Charles W. Fairbanks,254,47.80%,"8,547,030",46.10%
+80,1920, Republican,Warren G. Harding,Calvin Coolidge,404,76.10%,"16,151,916",60.30%
+81,1920, Democratic,James M. Cox,Franklin D. Roosevelt,127,23.90%,"9,134,074",34.10%
+82,1924, Republican,Calvin Coolidge,Charles G. Dawes,382,71.90%,"15,724,310",54.00%
+83,1924, Democratic,John W. Davis,Charles W. Bryan,136,25.60%,"8,386,532",28.80%
+84,1924, Progressive,Robert LaFollette,Burton K. Wheeler,13,2.40%,"4,827,184", 16.6%
+85,1928, Republican,Herbert Hoover,Charles Curtis,444,83.60%,"21,432,823",58.20%
+86,1928, Democratic,Alfred E. Smith,Joseph Robinson,87,16.40%,"15,004,336",40.80%
+87,1932, Democratic,Franklin D. Roosevelt,John Garner,472,88.90%,"22,818,740",57.40%
+88,1932, Republican,Herbert Hoover,Charles Curtis,59,11.10%,"15,760,425",39.60%
+89,1936, Democratic,Franklin D. Roosevelt,John Garner,523,98.50%,"27,750,866",60.80%
+90,1936, Republican,Alfred M. Landon,Frank Knox,8,1.50%,"16,679,683",36.50%
+91,1940, Democratic,Franklin D. Roosevelt,Henry A. Wallace,449,84.60%,"27,243,218",54.70%
+92,1940, Republican,Wendell L. Willkie,Charles L. McNary,82,15.40%,"22,334,940",44.80%
+93,1944, Democratic,Franklin D. Roosevelt,Harry S Truman,432,81.40%,"25,612,610",53.40%
+94,1944, Republican,Thomas E. Dewey,John W. Bricker,99,18.60%,"22,014,160",45.90%
+95,1948, Democratic,Harry S Truman,Alben W. Barkley,303,57.10%,"24,105,810",49.50%
+96,1948, Republican,Thomas E. Dewey,Earl Warren,189,35.60%,"21,970,064",45.10%
+97,1948, States' Rights,Strom Thurmond,Fielding Wright,39,7.30%,"1,169,114",2.40%
+98,1952, Republican,Dwight D. Eisenhower,Richard M. Nixon,442,83.20%,"33,777,945",54.90%
+99,1952, Democratic,Adlai Stevenson,John Sparkman,89,16.80%,"27,314,992",44.40%
+100,1956, Republican,Dwight D. Eisenhower,Richard M. Nixon,457,86.10%,"35,590,472",57.40%
+101,1956, Democratic,Adlai Stevenson,Estes Kefauver,73,13.70%,"26,022,752",42.00%
+102,1960, Democratic,John F. Kennedy,Lyndon B. Johnson,303,56.40%,"34,226,731",49.70%
+103,1960, Republican,Richard M. Nixon,Henry Cabot Lodge,219,40.80%,"34,108,157",49.50%
+104,1960, Democratic,Harry F. Byrd,Strom Thurmond,15,2.80%,0,0%
+105,1964, Democratic,Lyndon B. Johnson,Hubert H. Humphrey,486,90.30%,"43,129,566",61.10%
+106,1964, Republican,Barry Goldwater,William E. Miller,52,9.70%,"27,178,188",38.50%
+107,1968, Republican,Richard Nixon,Spiro Agnew,301,55.90%,"31,785,480",43.40%
+108,1968, Democratic,Hubert Humphrey,Edmund Muskie,191,35.50%,"31,275,166",42.70%
+109,1968, American Independent,George Wallace,Curtis LeMay,45,8.40%,"9,906,473", 13.5%
+110,1972, Republican,Richard M. Nixon,Spiro Agnew,520,96.70%,"47,169,911",60.70%
+111,1972, Democratic,George McGovern,Sargent Shriver,17,3.20%,"29,170,383",37.50%
+112,1976, Democratic,Jimmy Carter,Walter Mondale,297,55.20%,"40,830,763",50.10%
+113,1976, Republican,Gerald R. Ford,Robert Dole,240,44.60%,"39,147,793",48.00%
+114,1980, Republican,Ronald Reagan,George Bush,489,90.90%,"43,904,153",50.70%
+115,1980, Democratic,Jimmy Carter,Walter Mondale,49,9.10%,"35,483,883",41.00%
+116,1980, Independent,John Anderson,Patrick Lucey,0,0%,"5,720,060", 6.6%
+117,1984, Republican,Ronald Reagan,George Bush,525,97.60%,"54,455,075",58.80%
+118,1984, Democratic,Walter Mondale,Geraldine Ferraro,13,2.40%,"37,577,185",40.60%
+119,1988, Republican,George Bush,Dan Quayle,426,79.20%,"48,886,097",53.40%
+120,1988, Democratic,Michael Dukakis,Lloyd Bentsen,111,20.60%,"41,809,074",45.60%
+121,1992, Democratic,William J. Clinton,"Albert Gore, Jr.",370,68.80%,"44,909,326",43.00%
+122,1992, Republican,George Bush,Dan Quayle,168,31.20%,"39,103,882",37.40%
+123,1992, Independent,H. Ross Perot,James Stockdale,0,0%,"19,741,657", 18.9%
+124,1996, Democratic,William J. Clinton,"Albert Gore, Jr.",379,70.40%,"47,402,357",49.20%
+125,1996, Republican,Robert Dole,Jack Kemp,159,29.60%,"39,198,755",40.70%
+126,1996, Reform,H. Ross Perot,Pat Choate,0,0%,"8,085,402", 8.4%
+127,2000, Republican,George W. Bush,Richard Cheney,271,50.40%,"50,455,156",47.90%
+128,2000, Democratic,"Albert Gore, Jr.",Joseph Lieberman,266,49.40%,"50,992,335",48.40%
+129,2000, Green,Ralph Nader,Winona LaDuke,0,0%,"2,882,738", 2.7%
+130,2004, Republican,George W. Bush,Richard Cheney,286,53.20%,"62,040,610",50.70%
+131,2004, Democratic,John Kerry,John Edwards,251,46.70%,"59,028,444",48.30%
+132,2008, Democratic,Barack Obama,Joseph Biden,365,67.80%,"69,456,897",52.90%
+133,2008, Republican,John McCain,Sarah Palin,173,32.20%,"59,934,814",45.70%
+134,2012, Democratic,Barack Obama,Joseph Biden,332,61.70%,"65,899,660",51.10%
+135,2012, Republican,Mitt Romney,Paul Ryan,206,38.30%,"60,932,152",47.20%
+136,2016, Democratic,Hillary Clinton,Tim Kaine,232,43.10%,"63,611,771",47.90%
+137,2016, Republican,Donald Trump,Mike Pence,306,56.90%,"61,994,596",46.70%
+138,2016, Libertarian,Gary Johnson,William Weld,0,--,"4,378,932",3.30%
+139,2016, Green,Jill Stein,Ajamu Baraka,0,--,"1,369,105",1.00%
+140,2016,NA,NA,NA,NA,NA,NA,NA

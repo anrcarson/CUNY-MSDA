@@ -1,0 +1,718 @@
+---
+title: "Final Project: Get Data"
+author: "Andrew Carson"
+date: "December 18, 2016"
+output: html_document
+---
+#### Get Data
+
+Getting the data was quite difficult, as there were many different webpages and .txt or .csv files of differing formats.  Thus, automating an extraction process was quite challenging given the many caveats.  Below is the code used to extract the data from the various sources.  
+
+Code may appear to be repeated, but upon closer inspection, you will observe slight changes to account for the slight changes in the data source.  When the code is duplicated, I had determined that simply copying the code would be faster for extracting the data.  Given the instability of the file formats, I can't even be sure that such code will run properly in the near future, and so the repeated code provides a little more flexibility to make quick changes when needed.
+
+Note that all final .csv files are available here: (Github link)
+
+##### Get National Summaries
+
+In this section, I get the presidential elections data at the national level.
+
+```{r, eval=FALSE}
+
+library(rvest)
+library(tidyr)
+library(dplyr)
+library(XML)
+
+# get voting summaries for all elections
+summary_df<-c()
+
+for (i in c(1789,seq(1792,2016,4))) {
+  
+  #i<-2016
+  url<-paste0("http://www.presidency.ucsb.edu/showelection.php?year=",i)
+    
+  
+  #get page
+  Sys.sleep(1) #crawl delay
+  page<-readHTMLTable(url)
+  
+  if(i %in% c(1789, 1792, 1800)) {
+  
+    summarytable<-page[[12]]
+    summarytable<-summarytable[,c(2,4,5,6)]
+    summarytable_char<-data.frame(lapply(summarytable,as.character), stringsAsFactors = FALSE)
+    
+    final<-cbind(i,summarytable_char[,c(1,2)],NA,summarytable_char[,c(3,4)],NA,NA)
+    
+    
+    #combined
+    names(final) <- c("Year","Party", "President", "VicePresident", "ElectoralVote", "ElectoralPerc", "PopularVote", "PopularPerc")
+    
+    summary_df<-rbind(summary_df,final)
+  } else if (i %in% c(1796)) {
+    
+    summarytable<-page[[12]]
+    summarytable<-summarytable[c(1:2),c(2,4,5,6)]
+    summarytable_char<-data.frame(lapply(summarytable,as.character), stringsAsFactors = FALSE)
+    
+    final<-cbind(i,summarytable_char[,c(1,2)],NA,summarytable_char[,c(3,4)],NA,NA)
+    
+    
+    #combined
+    names(final) <- c("Year","Party", "President", "VicePresident", "ElectoralVote", "ElectoralPerc", "PopularVote", "PopularPerc")
+    
+    summary_df<-rbind(summary_df,final)
+    
+  } else if(i %in% c(seq(1804,1820,4))) {
+  
+    summarytable<-page[[12]]
+    summarytable<-summarytable[c(2,3),c(2,4,5,6,7)]
+    summarytable_char<-data.frame(lapply(summarytable,as.character), stringsAsFactors = FALSE)
+    
+    final<-cbind(i,summarytable_char[,c(1,2,3)],summarytable_char[,c(4,5)],NA,NA)
+    
+    
+    #combined
+    names(final) <- c("Year","Party", "President", "VicePresident", "ElectoralVote", "ElectoralPerc", "PopularVote", "PopularPerc")
+    
+    summary_df<-rbind(summary_df,final)
+  } else if(i %in% c(seq(1824,1924,4),1936)) {
+  
+    summarytable<-page[[12]]
+    summarytable<-summarytable[c(2:nrow(summarytable)),c(2,4:9)]
+    summarytable_char<-data.frame(lapply(summarytable,as.character), stringsAsFactors = FALSE)
+    
+    final<-cbind(i,summarytable_char)
+    
+    
+    #combined
+    names(final) <- c("Year","Party", "President", "VicePresident", "ElectoralVote", "ElectoralPerc", "PopularVote", "PopularPerc")
+    
+    summary_df<-rbind(summary_df,final)
+  } else if(i %in% c(1928,1932,seq(1940,2016,4))) {
+  
+    summarytable<-page[[13]]
+    summarytable<-summarytable[c(2:nrow(summarytable)),c(2,4:9)]
+    summarytable_char<-data.frame(lapply(summarytable,as.character), stringsAsFactors = FALSE)
+    
+    final<-cbind(i,summarytable_char)
+    
+    
+    #combined
+    names(final) <- c("Year","Party", "President", "VicePresident", "ElectoralVote", "ElectoralPerc", "PopularVote", "PopularPerc")
+    
+    summary_df<-rbind(summary_df,final)
+  }
+  
+
+print(i)
+  
+}
+
+
+#write out summaries for later
+write.csv(summary_df,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/summary_df.csv")
+
+```
+
+##### Get State Summaries
+
+In this section, I get the presidential elections data at the state level.
+
+```{r, eval=FALSE}
+
+
+# get voting summaries for all elections
+summary_df<-c()
+state_header_df<-c()
+
+for (i in seq(1824,2016,4)) {
+  
+  #i<-2004
+  url<-paste0("http://www.presidency.ucsb.edu/showelection.php?year=",i)
+    
+  
+  #get page
+  Sys.sleep(1) #crawl delay
+  page<-readHTMLTable(url)
+  
+ if(i %in% c(1824)) {
+  
+    summarytable<-page[[13]]
+    summarytable_char<-data.frame(lapply(summarytable,as.character), stringsAsFactors = FALSE)
+    
+    #get header
+    header<-cbind(i,summarytable_char[1,])
+    names(header)<-c("Year","Candidate1","Candidate2","Candidate3","Candidate4")
+
+    
+    #remove headers and end rows
+    summarytable_char<-summarytable_char[4:(nrow(summarytable_char)-5),]
+    
+    #final
+    final<-cbind(i,summarytable_char)
+    
+    
+    #combined
+    names(final) <- c("Year","State", "TotalVotes", "Candidate1Votes", "Candidate1%", "Candidate1EV"
+                                                  , "Candidate2Votes", "Candidate2%", "Candidate2EV"
+                                                  , "Candidate3Votes", "Candidate3%", "Candidate3EV"
+                                                  , "Candidate4Votes", "Candidate4%", "Candidate4EV"
+                      )
+    
+    summary_df<-rbind(summary_df,final)
+    state_header_df<-rbind(state_header_df,header)
+    
+
+    
+    
+  } else if(i %in% c(seq(1828,1924,4),1936)) {
+  
+    summarytable<-page[[13]]
+    summarytable_char<-data.frame(lapply(summarytable,as.character), stringsAsFactors = FALSE)
+    
+    #get header
+    header<-cbind(i,summarytable_char[1,])
+    header<-cbind(header,matrix(nrow=1,ncol= (15 - ncol(header))))
+    names(header)<-c("Year","Candidate1","Candidate2","Candidate3","Candidate4")
+    
+
+    
+    #remove headers and end rows
+    summarytable_char<-summarytable_char[4:(nrow(summarytable_char)-2),]
+    
+    #final
+    final<-cbind(i,summarytable_char)
+    final<-cbind(final,matrix(nrow = nrow(final), ncol = (15 - ncol(final))))
+    
+    #combined
+    names(final) <- c("Year","State", "TotalVotes", "Candidate1Votes", "Candidate1%", "Candidate1EV"
+                                                  , "Candidate2Votes", "Candidate2%", "Candidate2EV"
+                                                  , "Candidate3Votes", "Candidate3%", "Candidate3EV"
+                                                  , "Candidate4Votes", "Candidate4%", "Candidate4EV"
+                      )
+    
+    summary_df<-rbind(summary_df,final)
+    state_header_df<-rbind(state_header_df,header)
+    
+    
+  } else if(i %in% c(1928,1932,1940,1944,1952,1956)) {
+  
+    summarytable<-page[[12]]
+    summarytable_char<-data.frame(lapply(summarytable,as.character), stringsAsFactors = FALSE)
+    
+    
+    #get header
+    summarytable_char<-summarytable_char[7:nrow(summarytable_char),]
+    header<-cbind(i,summarytable_char[1,])
+    header<-cbind(header,matrix(nrow=1,ncol= (15 - ncol(header))))
+    names(header)<-c("Year","Candidate1","Candidate2","Candidate3","Candidate4")
+    
+
+    
+    #remove headers and end rows
+    summarytable_char<-summarytable_char[5:(nrow(summarytable_char)-2),]
+    
+    #final
+    final<-cbind(i,summarytable_char)
+    final<-cbind(final,matrix(nrow = nrow(final), ncol = (15 - ncol(final))))
+    
+    #combined
+    names(final) <- c("Year","State", "TotalVotes", "Candidate1Votes", "Candidate1%", "Candidate1EV"
+                                                  , "Candidate2Votes", "Candidate2%", "Candidate2EV"
+                                                  , "Candidate3Votes", "Candidate3%", "Candidate3EV"
+                                                  , "Candidate4Votes", "Candidate4%", "Candidate4EV"
+                      )
+    
+    summary_df<-rbind(summary_df,final)
+    state_header_df<-rbind(state_header_df,header)
+    
+    
+  } else if(i %in% c(1948)) {
+  
+    summarytable<-page[[12]]
+    summarytable_char<-data.frame(lapply(summarytable,as.character), stringsAsFactors = FALSE)
+    
+    
+    #get header
+    summarytable_char<-summarytable_char[8:nrow(summarytable_char),]
+    header<-cbind(i,summarytable_char[1,])
+    header<-cbind(header,matrix(nrow=1,ncol= (15 - ncol(header))))
+    names(header)<-c("Year","Candidate1","Candidate2","Candidate3","Candidate4")
+    
+
+    
+    #remove headers and end rows
+    summarytable_char<-summarytable_char[5:(nrow(summarytable_char)-2),]
+    
+    #final
+    final<-cbind(i,summarytable_char)
+    final<-cbind(final,matrix(nrow = nrow(final), ncol = (15 - ncol(final))))
+    
+    #combined
+    names(final) <- c("Year","State", "TotalVotes", "Candidate1Votes", "Candidate1%", "Candidate1EV"
+                                                  , "Candidate2Votes", "Candidate2%", "Candidate2EV"
+                                                  , "Candidate3Votes", "Candidate3%", "Candidate3EV"
+                                                  , "Candidate4Votes", "Candidate4%", "Candidate4EV"
+                      )
+    
+    summary_df<-rbind(summary_df,final)
+    state_header_df<-rbind(state_header_df,header)
+    
+    
+  } else if(i %in% c(1960, 1968,1980,1992,1996,2000)) {
+  
+    summarytable<-page[[12]]
+    summarytable_char<-data.frame(lapply(summarytable,as.character), stringsAsFactors = FALSE)
+    
+    
+    #get header
+    summarytable_char<-summarytable_char[6:nrow(summarytable_char),]
+    header<-cbind(i,summarytable_char[1,])
+    header$V1<-NULL
+    
+    header<-cbind(header,matrix(nrow=1,ncol= (15 - ncol(header))))
+    names(header)<-c("Year","Candidate1","Candidate2","Candidate3","Candidate4")
+    
+
+    
+    #remove headers and end rows
+    summarytable_char<-summarytable_char[4:(nrow(summarytable_char)-2),]
+    
+    #final
+    final<-cbind(i,summarytable_char)
+    final<-cbind(final,matrix(nrow = nrow(final), ncol = (15 - ncol(final))))
+    
+    #combined
+    names(final) <- c("Year","State", "TotalVotes", "Candidate1Votes", "Candidate1%", "Candidate1EV"
+                                                  , "Candidate2Votes", "Candidate2%", "Candidate2EV"
+                                                  , "Candidate3Votes", "Candidate3%", "Candidate3EV"
+                                                  , "Candidate4Votes", "Candidate4%", "Candidate4EV"
+                      )
+    
+    summary_df<-rbind(summary_df,final)
+    state_header_df<-rbind(state_header_df,header)
+    
+    
+  } else if(i %in% c(1964,1972,1976,1984,1988)) {
+  
+    summarytable<-page[[12]]
+    summarytable_char<-data.frame(lapply(summarytable,as.character), stringsAsFactors = FALSE)
+    
+    
+    #get header
+    summarytable_char<-summarytable_char[6:nrow(summarytable_char),]
+    header<-cbind(i,summarytable_char[1,])
+    header<-cbind(header,matrix(nrow=1,ncol= (15 - ncol(header))))
+    names(header)<-c("Year","Candidate1","Candidate2","Candidate3","Candidate4")
+    
+
+    
+    #remove headers and end rows
+    summarytable_char<-summarytable_char[5:(nrow(summarytable_char)-2),]
+    
+    #final
+    final<-cbind(i,summarytable_char)
+    final<-cbind(final,matrix(nrow = nrow(final), ncol = (15 - ncol(final))))
+    
+    #combined
+    names(final) <- c("Year","State", "TotalVotes", "Candidate1Votes", "Candidate1%", "Candidate1EV"
+                                                  , "Candidate2Votes", "Candidate2%", "Candidate2EV"
+                                                  , "Candidate3Votes", "Candidate3%", "Candidate3EV"
+                                                  , "Candidate4Votes", "Candidate4%", "Candidate4EV"
+                      )
+    
+    summary_df<-rbind(summary_df,final)
+    state_header_df<-rbind(state_header_df,header)
+    
+    
+  } else if(i %in% c(2004,2008)) {
+  
+    summarytable<-page[[12]]
+    summarytable_char<-data.frame(lapply(summarytable,as.character), stringsAsFactors = FALSE)
+    
+    
+    #get header
+    summarytable_char<-summarytable_char[6:nrow(summarytable_char),]
+    header<-cbind(i,summarytable_char[1,])
+    header<-cbind(header,matrix(nrow=1,ncol= (15 - ncol(header))))
+    names(header)<-c("Year","Candidate1","Candidate2","Candidate3","Candidate4")
+    
+
+    
+    #remove headers and end rows
+    summarytable_char<-summarytable_char[4:(nrow(summarytable_char)-2),]
+    
+    #final
+    final<-cbind(i,summarytable_char)
+    final<-cbind(final,matrix(nrow = nrow(final), ncol = (15 - ncol(final))))
+    
+    #combined
+    names(final) <- c("Year","State", "TotalVotes", "Candidate1Votes", "Candidate1%", "Candidate1EV"
+                                                  , "Candidate2Votes", "Candidate2%", "Candidate2EV"
+                                                  , "Candidate3Votes", "Candidate3%", "Candidate3EV"
+                                                  , "Candidate4Votes", "Candidate4%", "Candidate4EV"
+                      )
+    
+    summary_df<-rbind(summary_df,final)
+    state_header_df<-rbind(state_header_df,header)
+    
+    
+  } else if(i %in% c(2012)) {
+  
+    summarytable<-page[[12]]
+    summarytable_char<-data.frame(lapply(summarytable,as.character), stringsAsFactors = FALSE)
+    
+    
+    #get header
+    summarytable_char<-summarytable_char[8:nrow(summarytable_char),]
+    header<-cbind(i,summarytable_char[1,])
+    header$V1<-NULL
+    header<-cbind(header,matrix(nrow=1,ncol= (15 - ncol(header))))
+    names(header)<-c("Year","Candidate1","Candidate2","Candidate3","Candidate4")
+    
+
+    
+    #remove headers and end rows
+    summarytable_char<-summarytable_char[4:(nrow(summarytable_char)-2),]
+    
+    #final
+    final<-cbind(i,summarytable_char)
+    final<-cbind(final,matrix(nrow = nrow(final), ncol = (15 - ncol(final))))
+    
+    #combined
+    names(final) <- c("Year","State", "TotalVotes", "Candidate1Votes", "Candidate1%", "Candidate1EV"
+                                                  , "Candidate2Votes", "Candidate2%", "Candidate2EV"
+                                                  , "Candidate3Votes", "Candidate3%", "Candidate3EV"
+                                                  , "Candidate4Votes", "Candidate4%", "Candidate4EV"
+                      )
+    
+    summary_df<-rbind(summary_df,final)
+    state_header_df<-rbind(state_header_df,header)
+    
+    
+  } else if(i %in% c(2016)) {
+  
+    summarytable<-page[[12]]
+    summarytable_char<-data.frame(lapply(summarytable,as.character), stringsAsFactors = FALSE)
+    
+    
+    #get header
+    summarytable_char<-summarytable_char[11:nrow(summarytable_char),]
+    header<-cbind(i,summarytable_char[1,])
+    header<-cbind(header,matrix(nrow=1,ncol= (15 - ncol(header))))
+    names(header)<-c("Year","Candidate1","Candidate2","Candidate3","Candidate4")
+    
+
+    
+    #remove headers and end rows
+    summarytable_char<-summarytable_char[4:(nrow(summarytable_char)-2),]
+    
+    #final
+    final<-cbind(i,summarytable_char)
+    final<-cbind(final,matrix(nrow = nrow(final), ncol = (15 - ncol(final))))
+    
+    #combined
+    names(final) <- c("Year","State", "TotalVotes", "Candidate1Votes", "Candidate1%", "Candidate1EV"
+                                                  , "Candidate2Votes", "Candidate2%", "Candidate2EV"
+                                                  , "Candidate3Votes", "Candidate3%", "Candidate3EV"
+                                                  , "Candidate4Votes", "Candidate4%", "Candidate4EV"
+                      )
+    
+    summary_df<-rbind(summary_df,final)
+    state_header_df<-rbind(state_header_df,header)
+    
+    
+  }
+
+print(i)
+  
+}
+
+
+#write out summaries for later
+write.csv(summary_df,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/summary_state_df.csv")
+
+write.csv(state_header_df,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_header_df.csv")
+
+```
+
+
+  
+##### Get National Population Data: 1900 - 2016
+
+In this section, I get the yearly population data at the national level.
+  
+```{r, eval = FALSE}
+
+library(stringr)
+
+######### national population 1900-1999
+national_population<-readLines("http://www.census.gov/popest/data/national/totals/pre-1980/tables/popclockest.txt")
+
+#clean rows
+national_population<-national_population[11:119]
+national_population<-national_population[which(national_population != "")]
+nat_pop_1_85<-str_split(national_population[1:85],"     ", simplify = TRUE)
+nat_pop_86_100<-str_split(national_population[86:100],"       ", simplify = TRUE)
+nat_pop_1_85<-nat_pop_1_85[,c(1,2,4,6)]
+nat_pop_86_100<-nat_pop_86_100[,c(1,2,3,5)]
+
+#transform into dataframe
+national_population_clean<- rbind(nat_pop_1_85,nat_pop_86_100)
+national_population_clean<-data.frame(apply(national_population_clean,c(1, 2),str_trim), stringsAsFactors = FALSE)
+names(national_population_clean)<-c("Date","NationalPopulation","PopChange","AvgAnnualPercChange")
+
+#write out for later use
+write.csv(national_population_clean,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/national_population_1900_1999.csv")
+
+
+######### national population 2000 - 2010
+national_population<-read.csv("http://www.census.gov/popest/data/intercensal/national/files/US-EST00INT-TOT.csv")
+
+#write out for later use
+write.csv(national_population,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/national_population_2000_2010.csv")
+
+
+######### national population 2010 - 2016
+#sourced from: http://factfinder.census.gov/bkmk/table/1.0/en/PEP/2015/PEPMONTHN/
+
+national_population<-read.csv("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/national_population_2010_2016.csv")
+
+######## combine into single source file for 1900 - 2016
+#1900-1999
+nat_pop_1900_1999<-read.csv("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/national_population_1900_1999.csv")
+nat_pop_1900_1999$X<-NULL
+nat_pop_1900_1999<-nat_pop_1900_1999[,c(1,2)]
+
+#2000-2010
+nat_pop_2000_2010<-read.csv("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/national_population_2000_2010.csv")
+nat_pop_2000_2010$X<-NULL
+nat_pop_2000_2010<-nat_pop_2000_2010[which(nat_pop_2000_2010$MONTH==7),]
+nat_pop_2000_2010$Date<-paste0("July 1, ",nat_pop_2000_2010$YEAR)
+nat_pop_2000_2010<-nat_pop_2000_2010[,c(4,3)]
+names(nat_pop_2000_2010)<-c("Date","NationalPopulation")
+
+#2010-2016
+nat_pop_2010_2016<-read.csv("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/national_population_2010_2016.csv")
+nat_pop_2010_2016<-nat_pop_2010_2016[which(substring(nat_pop_2010_2016$"Year.and.Month",1,1)==7),]
+nat_pop_2010_2016$Date<-paste0("July 1, ",substring(nat_pop_2010_2016$"Year.and.Month",5,8))
+nat_pop_2010_2016<-nat_pop_2010_2016[2:nrow(nat_pop_2010_2016),c(7,2)]
+names(nat_pop_2010_2016)<-c("Date","NationalPopulation")
+
+
+#combine
+national_population_1900_2016<-
+  rbind(data.frame(lapply(nat_pop_1900_1999,as.character), stringsAsFactors = FALSE)
+        ,data.frame(lapply(nat_pop_2000_2010,as.character), stringsAsFactors = FALSE)
+        ,data.frame(lapply(nat_pop_2010_2016,as.character), stringsAsFactors = FALSE))
+
+
+#write out for later use
+write.csv(national_population_1900_2016,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/national_population_1900_2016.csv")
+
+```
+
+
+
+##### Get State Population Data: 1900 - 2016
+
+In this section, I get the yearly population data at the state level.
+
+```{r, eval=FALSE}
+#1900 - 1990
+
+############# 1900 - 1909 : data in thousands, July 1st estimates
+data<-readLines("http://www.census.gov/popest/data/state/asrh/1980s/tables/st0009ts.txt")
+
+data1<-data[18:72]
+data2<-data[76:130]
+
+data1<-str_split(data1,"[ ]{2,}", simplify = TRUE)
+data2<-str_split(data2,"[ ]{2,}", simplify = TRUE)
+
+data_combined<-cbind(data1,data2[,2:5])
+data_combined<-data.frame(data_combined,stringsAsFactors = FALSE)
+names(data_combined)<-c("State",seq(1900,1909,1))
+ 
+#write out
+write.csv(data_combined,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_1900_1909.csv")
+
+
+############## 1910 - 1919 : data in thousands, July 1st estimates
+data<-readLines("http://www.census.gov/popest/data/state/asrh/1980s/tables/st1019ts.txt")
+
+data1<-data[18:72]
+data2<-data[76:130]
+
+data1<-str_split(data1,"[ ]{2,}", simplify = TRUE)
+data2<-str_split(data2,"[ ]{2,}", simplify = TRUE)
+
+data_combined<-cbind(data1,data2[,2:5])
+data_combined<-data.frame(data_combined,stringsAsFactors = FALSE)
+names(data_combined)<-c("State",seq(1910,1919,1))
+ 
+#write out
+write.csv(data_combined,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_1910_1919.csv")
+
+############## 1920 - 1929 : data in thousands, July 1st estimates
+data<-readLines("http://www.census.gov/popest/data/state/asrh/1980s/tables/st2029ts.txt")
+
+data1<-data[18:72]
+data2<-data[76:130]
+
+data1<-str_split(data1,"[ ]{2,}", simplify = TRUE)
+data2<-str_split(data2,"[ ]{2,}", simplify = TRUE)
+
+data_combined<-cbind(data1,data2[,2:5])
+data_combined<-data.frame(data_combined,stringsAsFactors = FALSE)
+names(data_combined)<-c("State",seq(1920,1929,1))
+ 
+#write out
+write.csv(data_combined,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_1920_1929.csv")
+
+############## 1930 - 1939 : data in thousands, July 1st estimates
+data<-readLines("http://www.census.gov/popest/data/state/asrh/1980s/tables/st3039ts.txt")
+
+data1<-data[18:72]
+data2<-data[77:131]
+
+data1<-str_split(data1,"[ ]{2,}", simplify = TRUE)
+data2<-str_split(data2,"[ ]{2,}", simplify = TRUE)
+
+data_combined<-cbind(data1,data2[,2:5])
+data_combined<-data.frame(data_combined,stringsAsFactors = FALSE)
+names(data_combined)<-c("State",seq(1930,1939,1))
+ 
+#write out
+write.csv(data_combined,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_1930_1939.csv")
+
+############## 1940 - 1949 : data in thousands, July 1st estimates
+data<-readLines("http://www.census.gov/popest/data/state/asrh/1980s/tables/st4049ts.txt")
+
+data1<-data[16:70]
+data2<-data[74:128]
+
+data1<-str_split(data1,"[ ]{2,}", simplify = TRUE)
+data2<-str_split(data2,"[ ]{2,}", simplify = TRUE)
+
+data_combined<-cbind(data1,data2[,2:5])
+data_combined<-data.frame(data_combined,stringsAsFactors = FALSE)
+names(data_combined)<-c("State",seq(1940,1949,1))
+ 
+#write out
+write.csv(data_combined,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_1940_1949.csv")
+
+############## 1950 - 1959 : data in thousands, July 1st estimates
+data<-readLines("http://www.census.gov/popest/data/state/asrh/1980s/tables/st5060ts.txt")
+
+data1<-data[19:78]
+data2<-data[84:143]
+
+data1<-str_split(data1,"[ ]{2,}", simplify = TRUE)
+data2<-str_split(data2,"[ ]{2,}", simplify = TRUE)
+
+data_combined<-cbind(data1,data2[,2:7])
+data_combined<-data.frame(data_combined,stringsAsFactors = FALSE)
+names(data_combined)<-c("State","1950census",seq(1950,1959,1),"1960census")
+ 
+#write out
+write.csv(data_combined,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_1950_1959.csv")
+
+############## 1960 - 1969 : data in thousands, July 1st estimates
+data<-readLines("http://www.census.gov/popest/data/state/asrh/1980s/tables/st6070ts.txt")
+
+data1<-data[19:75]
+data2<-data[81:137]
+
+data1<-str_split(data1,"[ ]{2,}", simplify = TRUE)
+data2<-str_split(data2,"[ ]{2,}", simplify = TRUE)
+
+data_combined<-cbind(data1,data2[,2:7])
+data_combined<-data.frame(data_combined,stringsAsFactors = FALSE)
+names(data_combined)<-c("State","1960census",seq(1960,1969,1),"1970census")
+ 
+#write out
+write.csv(data_combined,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_1960_1969.csv")
+
+############## 1970 - 1979 : data in thousands, July 1st estimates
+data<-readLines("http://www.census.gov/popest/data/state/asrh/1980s/tables/st7080ts.txt")
+
+data1<-data[15:66]
+data2<-data[68:119]
+
+data1<-str_split(data1,"[ ]{1,}", simplify = TRUE)
+data2<-str_split(data2,"[ ]{1,}", simplify = TRUE)
+
+data1[52,]<-data1[52,c(9,1:8)]
+data2[52,]<-data2[52,c(8,1:7)]
+
+data_combined<-cbind(data1[,3:9],data2[,4:8])
+data_combined<-data.frame(data_combined,stringsAsFactors = FALSE)
+names(data_combined)<-c("State",seq(1970,1980,1))
+ 
+#write out
+write.csv(data_combined,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_1970_1979.csv")
+
+############## 1980 - 1989 : data in thousands, July 1st estimates
+data<-readLines("http://www.census.gov/popest/data/state/asrh/1980s/tables/st8090ts.txt")
+
+data1<-data[11:62]
+data2<-data[70:121]
+
+data1<-str_split(data1,"[ ]{1,}", simplify = TRUE)
+data2<-str_split(data2,"[ ]{1,}", simplify = TRUE)
+
+
+data_combined<-cbind(data1,data2[,2:7])
+data_combined<-data.frame(data_combined,stringsAsFactors = FALSE)
+names(data_combined)<-c("State",seq(1980,1990,1))
+ 
+#write out
+write.csv(data_combined,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_1980_1989.csv")
+  
+
+#################################
+
+# 1990 - 1999
+data<-readLines("http://www.census.gov/popest/data/state/totals/1990s/tables/ST-99-03.txt")
+
+data1<-data[14:78]
+data2<-data[88:152]
+
+data1<-str_split(data1,"[ ]{2,}", simplify = TRUE)
+data2<-str_split(data2,"[ ]{2,}", simplify = TRUE)
+
+data_combined<-cbind(data1[,3:9],data2[,4:8])
+data_combined<-data.frame(data_combined,stringsAsFactors = FALSE)
+names(data_combined)<-c("State",seq(1999,1990,-1),"census1990")
+
+#write out for using later
+write.csv(data_combined,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_1990_1999.csv")
+
+
+# 2000 - 2009
+data<-read.csv("http://www.census.gov/popest/data/intercensal/state/tables/ST-EST00INT-01.csv")
+data<-data[4:59,]
+names(data)<-c("State","census2000",seq(2000,2009,1),"census2010",2010)
+
+#write out for later use
+write.csv(data,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_2000_2009.csv")
+
+
+#2010 - 2016
+#sourced from : http://factfinder.census.gov/bkmk/table/1.0/en/PEP/2015/PEPANNRES/0100000US|0100000US.04000|0200000US1|0200000US2|0200000US3|0200000US4
+data<-read.csv("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_2010_2015_source.csv")
+names(data)<-c("State","census2010","EstimatesBase",seq(2010,2015,1))
+data<-data[2:57,]
+
+#write out for later use
+write.csv(data,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_2010_2015.csv")
+
+
+```
+
+#### Conclusion
+
+This was probably the most difficult part of the project for me, due to the time consuming nature of gathering the data and the intricate level of detail needed to correctly extract it.  There is an often quoted assertion that a data scientist spends 80% of his or her time just getting, cleaning, and transforming the data.  In this case, this was certainly true.
+

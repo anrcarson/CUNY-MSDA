@@ -1,0 +1,83 @@
+---
+title: "Final Project: State and National Population and Voting Trends"
+author: "Andrew Carson"
+date: "December 18, 2016"
+output: html_document
+---
+#### Introduction
+Do state populations bear any relationship to state voter turnouts and party selections in presidential elections?  What can we learn about voter turnout and state party preference based on state populations?  I intend to answer these questions in my exploration of state population data from 1900 through 2016 in comparison to state voting percentages and party selection from 1900 through 2016.  I will use census data and federal elections data to do the analysis.  This data is available on the web.  I will download, clean, transform, analyze, and visalize the data using R and R Markdown.
+
+
+#### Gather Data
+
+Gathering the data was quite difficult and required a great deal of code due to the many source files from the Census Bureau and the many slightly varying webpages containing Presidential election data at the national and state levels.  Consequently, I have placed that code in a separate file, located here (link to file).
+
+#### Clean/Transform Data
+  
+The code referenced in the above section output many different .csv files to my local computer, which I have placed in GitHub (link here).  In the following section, I bring these files together to form a few master data sets through various cleaning methods and transformations.
+
+```{r}
+
+#join national population data into single source
+read.csv("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/summary_df.csv")"
+
+
+
+```
+
+
+
+
+
+
+
+
+
+#### Analyze and Visualize Data
+
+Statistical analysis:
+
++ show summaries (means, sd, IQR, etc.) of population percentages in relation to US population.
+
+  
+Graphics:
+
++ show table head to validate that data is in R.  
++ Show top values, bottom values for population percentages and voter turnout.
+
+Graphics:
+
++ show population changes over time in a map of US
++ show how population correlates to party preference (box plot, scatterplot)
++ show how state population percentage of US total correlates to voter turnout percentage
+
+Statistical analysis: 
+
++ does population percentage correlate to party preference?
++ does state population percentage of US total correlates to voter turnout percentage?
++ can party (Republican or Democrat) selection be determined by state population percentage as compared with US population?
+
+New features:
+
++ explore ggmap or another mapping package to show trends over time in state population changes and also party voting changes
++ attempt to build a shiny app to allow better interaction with the data
+
+#### Conclusions 
+
+
+
+
+
+
+
+
+
+
+######## To Do Items
+
+To do:
+
++ create Github directory to store data
++ publish in rpubs
++ make sure all code and data is available directly from web and that code can run directly without downloading or installation issues.
+
