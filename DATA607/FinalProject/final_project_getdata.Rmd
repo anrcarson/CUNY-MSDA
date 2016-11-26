@@ -710,6 +710,93 @@ data<-data[2:57,]
 write.csv(data,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_2010_2015.csv")
 
 
+#######################################
+
+library(tidyr)
+library(dplyr)
+library(stringr)
+
+# join state population data into single source file for 1900-2016
+
+state_pop_df<-c()
+state_mapping<-read.csv("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_mapping.csv", stringsAsFactors = FALSE)
+
+for(i in seq(1900,2010,10)){
+  
+  #i<-2010
+  
+  if(i==2010){
+    data<-read.csv(
+  paste0("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_",2010,"_",2015,".csv")
+  , stringsAsFactors = FALSE)
+  } else{
+   data<-read.csv(
+  paste0("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_",i,"_",i+9,".csv")
+  , stringsAsFactors = FALSE) 
+    
+  }
+
+
+  #subset to only include rows with data
+  data<-subset(data, State!="" & State!="REGIONS:" & State!="STATES:")
+  data$X<-NULL
+  
+  #adjust State names
+  data$State[data$State == "US"]<-"U.S."
+  
+  #if year < 1970, multiply by 1000 to get actual numbers
+  if(i < 1970) {
+    
+    data[,2:ncol(data)]<-
+      data.frame(lapply(lapply(data[,2:ncol(data)],str_replace_all,",",""),as.numeric), stringsAsFactors = FALSE) *1000
+    
+  }
+  
+  
+  #if year == 2000 remove "." in State
+  if(i==2000){
+    
+    data$State<-str_replace_all(data$State,"\\.","")
+  }
+  
+  #if year = 2010 remove "Region" from State
+    if(i==2010){
+    
+    data$State<-str_replace_all(data$State," Region","")
+  }
+  
+  
+  #replace full state names with abbreviations for later files
+  if(i>=1990) {
+    
+    data<-full_join(state_mapping,data, by=c("StateFullName" = "State"))
+    data$StateFullName<-NULL
+    names(data)[1]<-"State"
+    
+  }
+  
+  
+
+  #join to previous data
+  if(i != 1900){
+    
+    state_pop_df<-full_join(state_pop_df,data, by="State")
+    
+    
+  } else {
+    
+   state_pop_df<-data 
+    
+  }
+  
+  
+}
+
+
+#write out for future use
+write.csv(state_pop_df,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_1900_2015.csv")
+
+
 ```
 
 #### Conclusion

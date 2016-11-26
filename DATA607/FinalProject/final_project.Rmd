@@ -14,12 +14,26 @@ Gathering the data was quite difficult and required a great deal of code due to 
 
 #### Clean/Transform Data
   
-The code referenced in the above section output many different .csv files to my local computer, which I have placed in GitHub (link here).  In the following section, I bring these files together to form a few master data sets through various cleaning methods and transformations.
+The code referenced in the above section output many different .csv files to my local computer, which I have placed in GitHub (link here).  After joining similar files together, I have these 5 master files to use in the following analyses:
+
+1. `state_population_1900_2015.csv`: Every state's population from 1900 through 2015
+
+2. `national_population_1900_2016.csv`: The United State's national population from 1900 through 2016.
+
+3. `state_header_df.csv`: The year and Presidential candidate names for each presidential election 1824 - 2016.  This matches with the file `summary_state_df.csv`.
+
+4. `summary_state_df.csv`: The year and total votes cast by state for each Presidential candidate from 1824 - 2016.  This matches with the file `state_header_df.csv`.
+
+5. `summary_df.csv`: The year, party, Presidential Candidate, Vice Presidential Candidate, Electoral Votes, Electoral Percentage, Popular Votes, and Popular Vote Percentage for each Presidential candidate from 1789 - 2016.
+
+Before use, each file needs further cleanup, which will be done below.
+
 
 ```{r}
 
-#join national population data into single source
-read.csv("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/summary_df.csv")"
+#1. state_population_1900_2015.csv
+data<-read.csv("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_1900_2015.csv")
+
 
 
 
