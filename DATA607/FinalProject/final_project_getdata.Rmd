@@ -128,7 +128,7 @@ state_header_df<-c()
 
 for (i in seq(1824,2016,4)) {
   
-  #i<-2004
+  #i<-1844
   url<-paste0("http://www.presidency.ucsb.edu/showelection.php?year=",i)
     
   
@@ -179,7 +179,7 @@ for (i in seq(1824,2016,4)) {
 
     
     #remove headers and end rows
-    summarytable_char<-summarytable_char[4:(nrow(summarytable_char)-2),]
+    summarytable_char<-summarytable_char[4:(nrow(summarytable_char)-1),]
     
     #final
     final<-cbind(i,summarytable_char)
