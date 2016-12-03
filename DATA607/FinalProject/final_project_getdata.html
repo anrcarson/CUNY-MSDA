@@ -125,10 +125,12 @@ $(document).ready(function () {
 
 <div id="get-data" class="section level4">
 <h4>Get Data</h4>
-<p>Getting the data was quite difficult, as there were many different webpages and .txt or .csv files of differing formats. Thus, automating an extraction process was quite challenging given the many caveats. Below is the code used to extract the data from the various sources. Note that all final .csv files are available here: (Github link)</p>
+<p>Getting the data was quite difficult, as there were many different webpages and .txt or .csv files of differing formats. Thus, automating an extraction process was quite challenging given the many caveats. Below is the code used to extract the data from the various sources.<br />
+Code may appear to be repeated, but upon closer inspection, you will observe slight changes to account for the slight changes in the data source. When the code is duplicated, I had determined that simply copying the code would be faster for extracting the data. Given the instability of the file formats, I can’t even be sure that such code will run properly in the near future, and so the repeated code provides a little more flexibility to make quick changes when needed.</p>
+<p>Note that all final .csv files are available here: <a href="https://github.com/anrcarson/CUNY-MSDA/tree/master/DATA607/FinalProject">GitHub</a></p>
 <div id="get-national-summaries" class="section level5">
 <h5>Get National Summaries</h5>
-<p>In this section, I get the presidential elections data at the national level.</p>
+<p>In this section, I get the presidential elections data at the national level. The source is from <a href="http://www.presidency.ucsb.edu/" class="uri">http://www.presidency.ucsb.edu/</a>.</p>
 <pre class="r"><code>library(rvest)
 library(tidyr)
 library(dplyr)
@@ -226,14 +228,14 @@ write.csv(summary_df,&quot;C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/
 </div>
 <div id="get-state-summaries" class="section level5">
 <h5>Get State Summaries</h5>
-<p>In this section, I get the presidential elections data at the state level.</p>
+<p>In this section, I get the presidential elections data at the state level. The source is <a href="http://www.presidency.ucsb.edu/" class="uri">http://www.presidency.ucsb.edu/</a>.</p>
 <pre class="r"><code># get voting summaries for all elections
 summary_df&lt;-c()
 state_header_df&lt;-c()
 
 for (i in seq(1824,2016,4)) {
   
-  #i&lt;-2004
+  #i&lt;-2016
   url&lt;-paste0(&quot;http://www.presidency.ucsb.edu/showelection.php?year=&quot;,i)
     
   
@@ -284,7 +286,7 @@ for (i in seq(1824,2016,4)) {
 
     
     #remove headers and end rows
-    summarytable_char&lt;-summarytable_char[4:(nrow(summarytable_char)-2),]
+    summarytable_char&lt;-summarytable_char[4:(nrow(summarytable_char)-1),]
     
     #final
     final&lt;-cbind(i,summarytable_char)
@@ -503,7 +505,7 @@ for (i in seq(1824,2016,4)) {
     
     
     #get header
-    summarytable_char&lt;-summarytable_char[11:nrow(summarytable_char),]
+    summarytable_char&lt;-summarytable_char[12:nrow(summarytable_char),]
     header&lt;-cbind(i,summarytable_char[1,])
     header&lt;-cbind(header,matrix(nrow=1,ncol= (15 - ncol(header))))
     names(header)&lt;-c(&quot;Year&quot;,&quot;Candidate1&quot;,&quot;Candidate2&quot;,&quot;Candidate3&quot;,&quot;Candidate4&quot;)
@@ -542,7 +544,7 @@ write.csv(state_header_df,&quot;C:/Users/Andy/Desktop/Personal/Learning/CUNY/DAT
 </div>
 <div id="get-national-population-data-1900---2016" class="section level5">
 <h5>Get National Population Data: 1900 - 2016</h5>
-<p>In this section, I get the yearly population data at the national level.</p>
+<p>In this section, I get the yearly population data at the national level. There are many different source files (see below for specifics), but all of the data comes from <a href="http://www.census.gov" class="uri">http://www.census.gov</a>.</p>
 <pre class="r"><code>library(stringr)
 
 ######### national population 1900-1999
@@ -611,7 +613,7 @@ write.csv(national_population_1900_2016,&quot;C:/Users/Andy/Desktop/Personal/Lea
 </div>
 <div id="get-state-population-data-1900---2016" class="section level5">
 <h5>Get State Population Data: 1900 - 2016</h5>
-<p>In this section, I get the yearly population data at the state level.</p>
+<p>In this section, I get the yearly population data at the state level. The data comes from various files provided by <a href="http://www.census.gov" class="uri">http://www.census.gov</a>.</p>
 <pre class="r"><code>#1900 - 1990
 
 ############# 1900 - 1909 : data in thousands, July 1st estimates
@@ -799,12 +801,99 @@ names(data)&lt;-c(&quot;State&quot;,&quot;census2010&quot;,&quot;EstimatesBase&q
 data&lt;-data[2:57,]
 
 #write out for later use
-write.csv(data,&quot;C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_2010_2015.csv&quot;)</code></pre>
+write.csv(data,&quot;C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_2010_2015.csv&quot;)
+
+
+#######################################
+
+library(tidyr)
+library(dplyr)
+library(stringr)
+
+# join state population data into single source file for 1900-2016
+
+state_pop_df&lt;-c()
+state_mapping&lt;-read.csv(&quot;C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_mapping.csv&quot;, stringsAsFactors = FALSE)
+
+for(i in seq(1900,2010,10)){
+  
+  #i&lt;-2010
+  
+  if(i==2010){
+    data&lt;-read.csv(
+  paste0(&quot;C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_&quot;,2010,&quot;_&quot;,2015,&quot;.csv&quot;)
+  , stringsAsFactors = FALSE)
+  } else{
+   data&lt;-read.csv(
+  paste0(&quot;C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_&quot;,i,&quot;_&quot;,i+9,&quot;.csv&quot;)
+  , stringsAsFactors = FALSE) 
+    
+  }
+
+
+  #subset to only include rows with data
+  data&lt;-subset(data, State!=&quot;&quot; &amp; State!=&quot;REGIONS:&quot; &amp; State!=&quot;STATES:&quot;)
+  data$X&lt;-NULL
+  
+  #adjust State names
+  data$State[data$State == &quot;US&quot;]&lt;-&quot;U.S.&quot;
+  
+  #if year &lt; 1970, multiply by 1000 to get actual numbers
+  if(i &lt; 1970) {
+    
+    data[,2:ncol(data)]&lt;-
+      data.frame(lapply(lapply(data[,2:ncol(data)],str_replace_all,&quot;,&quot;,&quot;&quot;),as.numeric), stringsAsFactors = FALSE) *1000
+    
+  }
+  
+  
+  #if year == 2000 remove &quot;.&quot; in State
+  if(i==2000){
+    
+    data$State&lt;-str_replace_all(data$State,&quot;\\.&quot;,&quot;&quot;)
+  }
+  
+  #if year = 2010 remove &quot;Region&quot; from State
+    if(i==2010){
+    
+    data$State&lt;-str_replace_all(data$State,&quot; Region&quot;,&quot;&quot;)
+  }
+  
+  
+  #replace full state names with abbreviations for later files
+  if(i&gt;=1990) {
+    
+    data&lt;-full_join(state_mapping,data, by=c(&quot;StateFullName&quot; = &quot;State&quot;))
+    data$StateFullName&lt;-NULL
+    names(data)[1]&lt;-&quot;State&quot;
+    
+  }
+  
+  
+
+  #join to previous data
+  if(i != 1900){
+    
+    state_pop_df&lt;-full_join(state_pop_df,data, by=&quot;State&quot;)
+    
+    
+  } else {
+    
+   state_pop_df&lt;-data 
+    
+  }
+  
+  
+}
+
+
+#write out for future use
+write.csv(state_pop_df,&quot;C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/FinalProject/state_population_1900_2015.csv&quot;)</code></pre>
 </div>
 </div>
 <div id="conclusion" class="section level4">
 <h4>Conclusion</h4>
-<p>This was probably the most difficult part of the project for me, due to the time consuming nature of gathering the data and the intricate level of detail needed to correctly extract it. There is an often quoted assertion that a data scientist spends 80% of his or her time just getting, cleaning, and transforming the data. In this case, this is certainly true.</p>
+<p>This was probably the most difficult part of the project for me, due to the time consuming nature of gathering the data and the intricate level of detail needed to correctly extract it. There is an often quoted assertion that a data scientist spends 80% of his or her time just getting, cleaning, and transforming the data. In this case, this was certainly true.</p>
 </div>
 
 

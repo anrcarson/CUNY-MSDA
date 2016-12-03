@@ -7,14 +7,13 @@ output: html_document
 #### Get Data
 
 Getting the data was quite difficult, as there were many different webpages and .txt or .csv files of differing formats.  Thus, automating an extraction process was quite challenging given the many caveats.  Below is the code used to extract the data from the various sources.  
-
 Code may appear to be repeated, but upon closer inspection, you will observe slight changes to account for the slight changes in the data source.  When the code is duplicated, I had determined that simply copying the code would be faster for extracting the data.  Given the instability of the file formats, I can't even be sure that such code will run properly in the near future, and so the repeated code provides a little more flexibility to make quick changes when needed.
 
-Note that all final .csv files are available here: (Github link)
+Note that all final .csv files are available here: [GitHub](https://github.com/anrcarson/CUNY-MSDA/tree/master/DATA607/FinalProject)
 
 ##### Get National Summaries
 
-In this section, I get the presidential elections data at the national level.
+In this section, I get the presidential elections data at the national level.  The source is from http://www.presidency.ucsb.edu/.
 
 ```{r, eval=FALSE}
 
@@ -117,7 +116,7 @@ write.csv(summary_df,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/Final
 
 ##### Get State Summaries
 
-In this section, I get the presidential elections data at the state level.
+In this section, I get the presidential elections data at the state level.  The source is http://www.presidency.ucsb.edu/.
 
 ```{r, eval=FALSE}
 
@@ -128,7 +127,7 @@ state_header_df<-c()
 
 for (i in seq(1824,2016,4)) {
   
-  #i<-1844
+  #i<-2016
   url<-paste0("http://www.presidency.ucsb.edu/showelection.php?year=",i)
     
   
@@ -398,7 +397,7 @@ for (i in seq(1824,2016,4)) {
     
     
     #get header
-    summarytable_char<-summarytable_char[11:nrow(summarytable_char),]
+    summarytable_char<-summarytable_char[12:nrow(summarytable_char),]
     header<-cbind(i,summarytable_char[1,])
     header<-cbind(header,matrix(nrow=1,ncol= (15 - ncol(header))))
     names(header)<-c("Year","Candidate1","Candidate2","Candidate3","Candidate4")
@@ -441,7 +440,7 @@ write.csv(state_header_df,"C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA607/
   
 ##### Get National Population Data: 1900 - 2016
 
-In this section, I get the yearly population data at the national level.
+In this section, I get the yearly population data at the national level.  There are many different source files (see below for specifics), but all of the data comes from http://www.census.gov.
   
 ```{r, eval = FALSE}
 
@@ -517,7 +516,7 @@ write.csv(national_population_1900_2016,"C:/Users/Andy/Desktop/Personal/Learning
 
 ##### Get State Population Data: 1900 - 2016
 
-In this section, I get the yearly population data at the state level.
+In this section, I get the yearly population data at the state level.  The data comes from various files provided by http://www.census.gov.
 
 ```{r, eval=FALSE}
 #1900 - 1990

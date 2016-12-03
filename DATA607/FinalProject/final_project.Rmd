@@ -13,7 +13,7 @@ Do state populations bear any relationship to state voter turnouts and party sel
 
 #### Gather Data
 
-Gathering the data was quite difficult and required a great deal of code due to the many source files from the Census Bureau and the many slightly varying webpages containing Presidential election data at the national and state levels.  Consequently, I have placed that code in a separate file, located here: [GitHub](https://github.com/anrcarson/CUNY-MSDA/blob/master/DATA607/FinalProject/final_project_getdata.Rmd).
+Gathering the data was quite difficult and required a great deal of code due to the many source files from the Census Bureau and the many slightly varying webpages containing Presidential election data at the national and state levels.  Consequently, I have placed that code in a separate file, located here: [GitHub](https://github.com/anrcarson/CUNY-MSDA/blob/master/DATA607/FinalProject/final_project_getdata.Rmd) [RPubs](http://rpubs.com/anrcarson/232668).
 
 #### Clean/Transform Data
   
@@ -265,17 +265,48 @@ kable(head(state_election_header))
 
 As visible below, the United States population has steadily increased since 1900. We can see slight changes during WWI and WWII in which the population growth slowed and then was followed by a boom.  Since then, the growth rate has been pretty consistent.  (Note: there is a slight jump between 1999 and 2000 due to a change in the data source.)
 
-```{r,eval=TRUE,echo=FALSE,message=FALSE, fig.align="center"}
+```{r,eval=TRUE,echo=FALSE,message=FALSE, fig.align="center", warning=FALSE}
 library(ggplot2)
-library(maps) 
+library(maps)
+library(mapdata)
+
 #Note: referenced "http://stackoverflow.com/questions/26540955/maps-ggplot2-fill-by-state-is-missing-certain-areas-on-the-map" for code help"
 
-#get mapping coordinates for United States
+#get mapping coordindates for US
 all_states <- map_data("state")
+alaska<-map_data("world", regions = "USA:Alaska")
+hawaii<-map_data("world", regions = "USA:Hawaii")
+
+#adjust order/group
+alaska$order<-max(all_states$order) + alaska$order
+alaska$group<-max(all_states$group) + alaska$group
+hawaii$order<-max(alaska$order) + hawaii$order
+hawaii$group<-max(alaska$group) + hawaii$group
+
+#move alaska
+alaska$region<-"alaska"
+alaska$long<-alaska$long + 40
+alaska$long[alaska$long>0]<-alaska$long[alaska$long>0] - 360
+alaska$lat<-alaska$lat-35
+
+#move hawaii
+hawaii$region<-"hawaii"
+hawaii$lat<-hawaii$lat + 3
+hawaii$long<-hawaii$long + 70
+
+#rescale alaska
+alaska$lat<-(alaska$lat-mean(alaska$lat))/3 + mean(alaska$lat)
+alaska$long<-(alaska$long-mean(alaska$long))/3 + mean(alaska$long)
+
+#combine into single df
+all_states_al_hi<-rbind(all_states,alaska,hawaii)
+
+#assign back to all_states
+all_states<-all_states_al_hi
+
 
 #national population
-qplot(x = Year, y = Population, data = national_population, ylim = c(0,350000000), main = "National Population By Year")
-
+qplot(x = Year, y = Population, data = national_population, ylim = c(0,350000000), main = "National Population By Year") + geom_smooth(method="lm")
 
 ```
 
@@ -315,7 +346,7 @@ qplot(x = Year, y = PopulationRatio, data = state, xlim = c(1900,2016), main="St
 
 We can visualize the above information differently using a map of the United States.  This first map shows that change in absolute population for each state from 1900-2016.  The map starts dark in 1900, but various states begin to emerge as their populations increase.  Early on we can see NY, PA, IL, and TX emerging.  CA begins to be noticeable in the 1920s.  FL becomes more noticeable in the 1980s.  Today, we can see that CA, TX, FL, NY, and IL have large populations.
 
-```{r,eval=TRUE,echo=FALSE,message=FALSE, fig.width=10, fig.height=20}
+```{r,eval=TRUE,echo=FALSE,message=FALSE, fig.width=10, fig.height=25}
 
 #state population changes over time
 state_mapping$StateFullName_lower<-tolower(state_mapping$StateFullName)
@@ -333,7 +364,7 @@ qplot(long, lat, geom="polygon", data=subset(state_population_map,Year>=1900),  
 
 In this second map, we visualize the population ratio, that is, the state population ratio to the national population.  As noted above, we can see that New England states and IL start off having the largest percentage of US residents.  But very early on we can see the rising importance of CA and TX.  CA has had the largest proportion of US residents since the 1970s.
 
-```{r,eval=TRUE,echo=FALSE,message=FALSE, fig.width=10, fig.height=20}
+```{r,eval=TRUE,echo=FALSE,message=FALSE, fig.width=10, fig.height=25}
 #state/national population ratio over time
 qplot(long, lat, geom="polygon", data=subset(state_population_map,Year>=1900),
 fill=PopulationRatio, group=group, main = "State Population Ratio Over Time") + facet_wrap(~Year, ncol=5)
@@ -356,7 +387,7 @@ The popular vote percentage tells a similar story, but perhaps less extreme beca
 
 ```{r,eval=TRUE,echo=FALSE,message=FALSE, warning=FALSE, fig.align="center"}
 max_PopularPerc<-national_election %>% group_by(Year) %>% summarise(max(PopularPerc))
-qplot(x = Year, y = `max(PopularPerc)`, data = max_PopularPerc, main = "National Election Maximum Popular Percentage Over Time") + geom_smooth()
+qplot(x = Year, y = `max(PopularPerc)`, data = subset(max_PopularPerc,Year>=1824), main = "National Election Maximum Popular Percentage Over Time") + geom_smooth()
 
 kable(head(arrange(max_PopularPerc,desc(`max(PopularPerc)`))))
 kable(head(arrange(max_PopularPerc,`max(PopularPerc)`)))
@@ -382,7 +413,7 @@ Why might the voting ratio be increasing over time?  We know that the population
 ```{r,eval=TRUE,echo=FALSE,message=FALSE, warning=FALSE, fig.align="center"}
 national$ContiguousSquareMiles<-2959064
 national$PopulationDensity<-national$Population/national$ContiguousSquareMiles
-qplot(x = PopulationDensity, y = Ratio, data = national, ylim=c(0,.5), main="Population Density vs. Voter Turnout Ratio") + geom_smooth(method = "lm")
+qplot(x = PopulationDensity, y = Ratio, data = national, ylim=c(0,.5), main="Population Density vs. Voter Turnout Ratio") + geom_smooth(method = "glm", formula = y~poly(x,3))
 
 summary(lm(Ratio~Year, data=national))
 summary(lm(Ratio~PopulationDensity, data=national))
@@ -395,7 +426,7 @@ Maine has had the highest ratio at 56% in 2004.  At present, MN has the highest 
 ```{r,eval=TRUE,echo=FALSE,message=FALSE, warning=FALSE, fig.width=10, fig.height=10}
 #state population vs. state election
 
-qplot(x = Year, y = Ratio, data = state, xlim = c(1900,2016), ylim=c(0,.5), main="Voter Turnout Ratio By State Over Time") + facet_wrap(~State, ncol=5) + geom_smooth()
+qplot(x = Year, y = Ratio, data = subset(state, Year<=2015), xlim = c(1900,2016), ylim=c(0,.5), main="Voter Turnout Ratio By State Over Time") + facet_wrap(~State, ncol=5) + geom_smooth()
 
 kable(head(arrange(state,desc(Ratio))))
 kable(head(arrange(state,Ratio)))
@@ -422,6 +453,8 @@ WinningCandidate<-c()
 #determine popular vote winner and party
 for (i in 1:nrow(state_election_full)){
 
+  if(state_election_full$Year[i] != 2016){
+  
   #i<-2
   #get max popular vote
    maxcandidate<-0
@@ -454,6 +487,46 @@ for (i in 1:nrow(state_election_full)){
   #match to candidate
   WinningCandidate<-c(WinningCandidate,state_election_full[i,15+maxcandidate])
 
+  } else{ #FOR 2016 Use EV
+    
+    #i<-2
+  #get max popular vote
+   maxcandidate<-0
+   max_vote_row<-0
+   #check 1
+   if(replace(state_election_full$Candidate1EV[i], is.na(state_election_full$Candidate1EV[i]),0)>max_vote_row){
+     maxcandidate<-1
+     max_vote_row<-state_election_full$Candidate1EV[i]
+   }
+
+
+   #check 2
+   if(replace(state_election_full$Candidate2EV[i], is.na(state_election_full$Candidate2EV[i]),0)>max_vote_row){
+     maxcandidate<-2
+     max_vote_row<-state_election_full$Candidate2EV[i]
+   }
+  #check 3
+   if(replace(state_election_full$Candidate3EV[i], is.na(state_election_full$Candidate3EV[i]),0)
+              >max_vote_row){
+     maxcandidate<-3
+     max_vote_row<-state_election_full$Candidate3EV[i]
+   }
+  #check 4
+   if(replace(state_election_full$Candidate4EV[i], is.na(state_election_full$Candidate4EV[i]),0)>max_vote_row){
+     maxcandidate<-4
+     max_vote_row<-state_election_full$Candidate4EV[i]
+   }
+
+
+  #match to candidate
+  WinningCandidate<-c(WinningCandidate,state_election_full[i,15+maxcandidate])  
+    
+    
+    
+  }
+  
+  
+  
   #print(i)
 }
 
@@ -540,7 +613,7 @@ Can we predict voter turnout?  Let's start with a state's population ratio.  Fro
 
 ```{r,eval=TRUE,echo=FALSE,message=FALSE, warning=FALSE, fig.align="center"}
 #population ratio to voting ratio
-qplot(x = PopulationRatio, y = Ratio, data = state, main="State Population Ratio vs. State Voting Ratio") +geom_smooth(method="lm")
+qplot(x = PopulationRatio, y = Ratio, data = subset(state, Year<=2015), main="State Population Ratio vs. State Voting Ratio") +geom_smooth(method="lm")
 ```
 
 What about population density?  In order to calculate population density, we need to read in the square miles in each state.  This is done below.
@@ -584,24 +657,24 @@ state$StatePopulationDensity<-state$StatePopulation/state$`Land sq miles`
 Does the state population density correlate with the voter turnout ratio?  As the plot below shows, there doesn't seem to much much of a relationship.  We get an R^2 value of 0.04, which doesn't mean much.
 
 ```{r,eval=TRUE,echo=FALSE,message=FALSE, warning=FALSE, fig.align="center"}
-qplot(x = StatePopulationDensity, y = Ratio, data = state, main="State Population Density vs. State Voting Ratio") +geom_smooth(method="lm")
+qplot(x = StatePopulationDensity, y = Ratio, data = subset(state, Year<=2015), main="State Population Density vs. State Voting Ratio") +geom_smooth(method="lm")
 summary(lm(Ratio~StatePopulationDensity, data=state))
 ```
 
 What if we look at each state individually?  From the plot below, we can see that, for each state, as population density increases relative to the state, so does voter turnout.  But this is problematic since then we can't use population density as a common variable to predict voter turnout.
 
 ```{r,eval=TRUE,echo=FALSE,message=FALSE,, warning=FALSE, fig.width=10, fig.height=10}
-qplot(x = StatePopulationDensity, y = Ratio, data = subset(state,!is.na(StatePopulationDensity),!is.na(Ratio)), main="State Population Density vs. State Voting Ratio by State") + facet_wrap(~State, scales = "free_x") + geom_smooth(method="lm")
+qplot(x = StatePopulationDensity, y = Ratio, data = subset(state,!is.na(StatePopulationDensity),!is.na(Ratio)&Ratio!=0), main="State Population Density vs. State Voting Ratio by State") + facet_wrap(~State, scales = "free_x") + geom_smooth(method="lm")
 ```
 
-What then do the states have in common that could account for an increase in voter turnout?  The commonality is the passage of time.  In the below plot, we use the Year to predict voter turnout for each state.  As you can see, the results for each state are fairly similar and linear.  An aggregated view is also included.  R^2 using Year to predict voter turnout ratio is 0.38.
+What then do the states have in common that could account for an increase in voter turnout?  The commonality is the passage of time.  In the below plot, we use the Year to predict voter turnout for each state.  As you can see, the results for each state are fairly similar and approximately linear (although we do see a bit of a curve using the red `geom_smooth` line).  An aggregated view is also included.  R^2 using Year to predict voter turnout ratio is 0.38.
 
 ```{r,eval=TRUE,echo=FALSE,message=FALSE, warning=FALSE, fig.width=10, fig.height=10}
-qplot(x = Year, y = Ratio, data = state, main="State Voting Ratio Over Time") + facet_wrap(~State) + geom_smooth(method="lm")
+qplot(x = Year, y = Ratio, data = subset(state, Year<=2015), main="State Voting Ratio Over Time") + facet_wrap(~State) + geom_smooth(method="lm")
 
 ```
 ```{r,eval=TRUE,echo=FALSE,message=FALSE, warning=FALSE, fig.align="center"}
-qplot(x = Year, y = Ratio, data = state, main="Voting Ratio Over Time") + geom_smooth(method="lm")
+qplot(x = Year, y = Ratio, data = subset(state, Year<=2015 & Year>=1900), main="Voting Ratio Over Time") + geom_smooth(method="lm") + geom_smooth(colour="red")
 summary(lm(Ratio~Year, data=state))
 ```
 
@@ -671,4 +744,4 @@ What is encouraging is that the level of political participation through voting 
 
 Finally, population density seems to be a significant factor, especially more recently, in predicting party outcome.  It should not surprise us that in less populated states, where people live more independently, traditionally, and may not be in need of government assistance and coordinated social planning, a Republican platform (less government, traditional values, less taxation) would be more appealing.  As urbanization occurs requiring more social cooperation and interaction in meeting social needs and demands in an increasingly diverse population, it makes sense that a Democratic platform (social welfare, government programs and projects, heterogeneous values) would become more appealing.
 
-This is certainly not the whole story (this would at most explain 20% of the variance in party preference), but it is reasonable interpretation of how population density might align with party preference.
+This is certainly not the whole story (this would at most explain 20% of the variance in party preference), but it is reasonable interpretation of why population density aligns to significant degree with party preference.
