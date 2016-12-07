@@ -572,7 +572,6 @@ There is lots of interesting information here.  We see in 1860 that the south al
 
 ```{r,eval=TRUE,echo=FALSE,message=FALSE}
 
-
 #join data together
 state_election_map<-left_join(all_states,state_mapping,by=c("region" = "StateFullName_lower"))
 state_election_map<-left_join(state_election_map,state_election_complete,by=c("StateAbbreviation" = "State"))
@@ -603,6 +602,91 @@ p <- ggplot()
 p <- p + geom_polygon(data=state_election_map, aes(x=long, y=lat, group = group),colour="black", fill=state_election_map$PartyColor) + facet_wrap(~Year) + ggtitle("Winning Party By State Over Time")
 p
 ```
+
+While I made the above judgement about when "Democratic" and "Republican" switched in meaning using a visual analysis, can we mathematically determine when this changed?  The main assumption we have to make is that the states that started off as more national and liberal (in our modern sense) have stayed that way.  That is, they started off as "Republican" or "Whig", and at some point, when the meaning of "Republican" changed relative to "Democrat", these states become "Democratic" (in our present usage).  Similarly, states that started off more state-oriented and conservative (in our modern sense) have also stayed that way.  That is, they started off as "Democratic" or "Southern Democratic", and as the meaning of "Democrat" changed relative to "Republican", these states become "Republican" (in our modern sense).
+
+My strategy then was to find the year at which a state switched from having a past of being "Democrat" to having a future of being "Republican", and vice versa.  I started with the year 1920, which is a year when the south is clearly Democratic in the old sense (conservative, state oriented) and the rest of the country is Republican in the old sense (liberal, national oriented), which contrasts with our present state/party orientation (south="Republican", most of the rest of the country = "Democrat").  I then assigned a 1 to each state for each year if the state was labeled as "Democratic" and a 0 if the state was labeled "Republican".  
+
+I then found the year in which the running average over 10 elections for a Democratic (old sense) starting state switched from being above .5 to being below .5, indicating a switch to being "Republican" (current sense).  Similarly, I found the year when a starting Republican (old sense) state switched from being below .5 to being above .5 in the running average over 10 elections, meaning it had switched to being "Democratic" (current sense).  I averaged the years in which this switch occurred for all of the states in which a switch did occur.  This was the estimated year in which the meaning of "Democrat" and "Republican" switched to be more similar to the other term's previous meaning going forward.
+
+Which year did I calculate?  The average was 1966.211, and the median was 1964.  This is consistent with my above visual conclusion, and it makes sense when we look at the map.  Before 1964, the southern states are regularly, although not always, Democrat as a group, even when the rest of the country is Republican (in 1948, they were the "State's Rights" party).  In 1964, the rest of the country is "Democratic", but the southern states as a group are "Republican" for the first time.  In 1968, the south votes for the "American Independent" party, but afterwards, apart from 1976, the south as a group regularly goes "Republican".  
+
+```{r, eval=FALSE, echo=FALSE, warning=FALSE}
+state_election_party<-subset(select(state_election_complete,State,Year,Party), Year>=1920)
+state_election_party$Democratic<-NA
+state_election_party$Party<-str_trim(state_election_party$Party)
+state_election_party$Democratic[which(state_election_party$Party=="Democratic"|state_election_party$Party=="Southern Democratic")]<-1
+state_election_party$Democratic[which(state_election_party$Party=="Republican"|state_election_party$Party=="National-Republican"|state_election_party$Party=="Whig")]<-0
+
+yearswitch_df<-c()
+yearswitch<-c()
+
+for(stateid in unique(state_election_party$State)){
+  #state<-"ID"
+  temp<-subset(state_election_party,State==stateid)
+  temp<-arrange(temp, Year)
+  
+  temp$Switch<-NA
+  if (mean(temp$Democratic[1:11], na.rm=TRUE)>=.5){ #starts democrat
+    for(j in 1:nrow(temp)){
+      #j<-1
+      avg<-mean(temp$Democratic[j:(j+10)], na.rm=TRUE) #avg over next 40 years (10 elections) is Democratic
+      if(avg<=.5){
+        temp$Switch[j]<-"yes"
+      }
+      
+    }
+  } else{#starts republican
+    for(j in 1:nrow(temp)){
+      #j<-1
+      avg<-mean(temp$Democratic[j:(j+10)], na.rm=TRUE)
+      if(avg>=.5){
+        temp$Switch[j]<-"yes"
+      }
+      
+    }
+    
+  }
+  
+  #find continuity of "switch" to avoid local change but not permanent change
+  year_distance<-temp$Year[which(temp$Switch=="yes")]
+  min_year<-c()
+  if(length(year_distance)>0){
+    for(k in 1:(length(year_distance)-1)){
+    #k<-1
+    if(year_distance[k+1]-year_distance[k]==4){
+      min_year<-c(min_year,year_distance[k])
+      }
+    }
+    
+  }
+  
+  
+  #get first year that switch occurred in continuity
+ yearswitch<-min(min_year)
+ yearswitch_df<-rbind(yearswitch_df,c(stateid, yearswitch))
+  
+}
+
+#remove states that had no switch
+yearswitch_df<-subset(data.frame(yearswitch_df, stringsAsFactors = FALSE), X2!=Inf)
+
+#find average and median year that switch occurred for states
+#mean(as.numeric(yearswitch_df$X2)) + 20 # add 20 years to find the middle year for the switch (average is over 40 years going forward from year)
+#median(as.numeric(yearswitch_df$X2)) + 20
+
+```
+
+Before moving on, consider one last look at the map.  In particular, compare 1900 to 2012 (see below map).  Notice that they are almost exactly flipped: red states are now blue, and blue states are now red.  Now compare 2012 to 2016, and notice that many New England and Great Lakes states have switched from blue to red.  Could this be the start of another significant meaning change in the terms "Republican" and "Democrat"?  We shall have to wait and see.
+
+```{r,eval=TRUE,echo=FALSE,message=FALSE, fig.width=10, fig.height=5}
+#produce map
+state_election_map_sub<-subset(state_election_map, Year %in% c(1900,2012,2016))
+p <- ggplot()
+p <- p + geom_polygon(data=state_election_map_sub, aes(x=long, y=lat, group = group),colour="black", fill=state_election_map_sub$PartyColor) + facet_wrap(~Year) + ggtitle("Winning Party By State Over Time")
+p
+```
+
 
 
 #### Predicting Voter Turnout and Party
