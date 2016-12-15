@@ -127,6 +127,7 @@ $(document).ready(function () {
 <h4>Get Data</h4>
 <p>Getting the data was quite difficult, as there were many different webpages and .txt or .csv files of differing formats. Thus, automating an extraction process was quite challenging given the many caveats. Below is the code used to extract the data from the various sources.<br />
 Code may appear to be repeated, but upon closer inspection, you will observe slight changes to account for the slight changes in the data source. When the code is duplicated, I had determined that simply copying the code would be faster for extracting the data. Given the instability of the file formats, I can’t even be sure that such code will run properly in the near future, and so the repeated code provides a little more flexibility to make quick changes when needed.</p>
+<p>The code was last updated on 12/15/16 and it ran correctly on that date.</p>
 <p>Note that all final .csv files are available here: <a href="https://github.com/anrcarson/CUNY-MSDA/tree/master/DATA607/FinalProject">GitHub</a></p>
 <div id="get-national-summaries" class="section level5">
 <h5>Get National Summaries</h5>
@@ -505,7 +506,7 @@ for (i in seq(1824,2016,4)) {
     
     
     #get header
-    summarytable_char&lt;-summarytable_char[12:nrow(summarytable_char),]
+    summarytable_char&lt;-summarytable_char[11:nrow(summarytable_char),]
     header&lt;-cbind(i,summarytable_char[1,])
     header&lt;-cbind(header,matrix(nrow=1,ncol= (15 - ncol(header))))
     names(header)&lt;-c(&quot;Year&quot;,&quot;Candidate1&quot;,&quot;Candidate2&quot;,&quot;Candidate3&quot;,&quot;Candidate4&quot;)
@@ -514,6 +515,10 @@ for (i in seq(1824,2016,4)) {
     
     #remove headers and end rows
     summarytable_char&lt;-summarytable_char[4:(nrow(summarytable_char)-2),]
+    
+    #adjust Nebraska
+    summarytable_char&lt;-subset(summarytable_char, V1 != &quot;CD-1&quot; &amp; V1 != &quot;CD-2&quot;&amp; V1 != &quot;CD-3&quot;)
+    summarytable_char[which(summarytable_char$V1==&quot;Nebraska&quot;),]$V8&lt;-5
     
     #final
     final&lt;-cbind(i,summarytable_char)

@@ -9,6 +9,8 @@ output: html_document
 Getting the data was quite difficult, as there were many different webpages and .txt or .csv files of differing formats.  Thus, automating an extraction process was quite challenging given the many caveats.  Below is the code used to extract the data from the various sources.  
 Code may appear to be repeated, but upon closer inspection, you will observe slight changes to account for the slight changes in the data source.  When the code is duplicated, I had determined that simply copying the code would be faster for extracting the data.  Given the instability of the file formats, I can't even be sure that such code will run properly in the near future, and so the repeated code provides a little more flexibility to make quick changes when needed.
 
+The code was last updated on 12/15/16 and it ran correctly on that date.
+
 Note that all final .csv files are available here: [GitHub](https://github.com/anrcarson/CUNY-MSDA/tree/master/DATA607/FinalProject)
 
 ##### Get National Summaries
@@ -397,7 +399,7 @@ for (i in seq(1824,2016,4)) {
     
     
     #get header
-    summarytable_char<-summarytable_char[12:nrow(summarytable_char),]
+    summarytable_char<-summarytable_char[11:nrow(summarytable_char),]
     header<-cbind(i,summarytable_char[1,])
     header<-cbind(header,matrix(nrow=1,ncol= (15 - ncol(header))))
     names(header)<-c("Year","Candidate1","Candidate2","Candidate3","Candidate4")
@@ -406,6 +408,10 @@ for (i in seq(1824,2016,4)) {
     
     #remove headers and end rows
     summarytable_char<-summarytable_char[4:(nrow(summarytable_char)-2),]
+    
+    #adjust Nebraska
+    summarytable_char<-subset(summarytable_char, V1 != "CD-1" & V1 != "CD-2"& V1 != "CD-3")
+    summarytable_char[which(summarytable_char$V1=="Nebraska"),]$V8<-5
     
     #final
     final<-cbind(i,summarytable_char)
