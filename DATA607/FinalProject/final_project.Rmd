@@ -32,6 +32,12 @@ The code referenced in the above section output many different .csv files to my 
 
 ```{r, eval=TRUE, echo=FALSE, message = FALSE, warning=FALSE}
 
+#check for packages to install and install them if missing
+packages <- c("tidyr", "dplyr", "stringr", "knitr", "ggplot2", "maps", "mapdata", "rvest","XML")
+if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
+  install.packages(setdiff(packages, rownames(installed.packages())))  
+}
+
 library(tidyr)
 library(dplyr)
 library(stringr)
@@ -433,7 +439,7 @@ kable(head(arrange(state,Ratio)))
 kable(head(arrange(subset(state, Year==2012),Ratio)))
 ```
 
-We can also visualize this information using a map of the United States.  As mentioned above, it looks like most states but particularly the south had little voter turnout before 1920.  After 1920, the south continued to have low voter turnout until the 1960s.  Since then, the south has come to have voter turnout similar to all other states.
+We can also visualize this information using a map of the United States.  As mentioned above, it looks like most states but particularly the south had little voter turnout before 1920.  After 1920, the south continued to have low voter turnout until the 1960s.  Since then, the south has come to have voter turnout similar to all other states.  (Note: data for the 2016 election was not fully published by several states as of the final data pull on 12/15/16.  Consequently, these states have a "0%" voter turnout ratio.)
 
 ```{r,eval=TRUE,echo=FALSE,message=FALSE,fig.width=10, fig.height=10}
 #state voting ratio over time
