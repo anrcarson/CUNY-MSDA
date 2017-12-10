@@ -1,0 +1,808 @@
+---
+title: 'DATA 605: Final Project'
+author: "Andrew Carson"
+date: "December 27, 2017"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+Your final is due by the end of day on 12/27/2017.  You should:
+
+  * post your solutions to your GitHub account.  
+  
+You are also expected to:
+
+  * make a short presentation during our last meeting (3-5 minutes) or post a recording to the board.  
+  
+This project will show off your ability to understand the elements of the class. 
+
+You are to register for Kaggle.com (free) and compete in the House Prices: Advanced Regression Techniques competition.  https://www.kaggle.com/c/house-prices-advanced-regression-techniques .  I want you to do the following.
+
+## Solution
+
+Pick one of the quantitative independent variables from the training data set (train.csv) , and define that variable as  X.   Pick SalePrice as the dependent variable, and define it as Y for the next analysis.
+
+```{r}
+#download the files and then load them from storage
+train <- read.csv("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA605/HW/FinalProject/train.csv",
+                  stringsAsFactors = FALSE)
+
+#define X and Y.  
+#X - GrLivArea: Above grade (ground) living area square feet
+X <- train$GrLivArea
+Y <-train$SalePrice
+```
+
+### Probability.   
+
+Calculate as a minimum the below probabilities a through c.  Assume the small letter "x" is estimated as the 1st quartile of the X variable, and the small letter "y" is estimated as the 2d quartile of the Y variable.  Interpret the meaning of all probabilities.
+
+```{r}
+# get quartiles
+summary(X)
+x <- summary(X)[2]
+x
+
+summary(Y)
+y <- summary(Y)[3]
+y
+
+#set up for probability questions
+df<-data.frame(cbind(X,Y), stringsAsFactors = FALSE)
+
+```
+
+
+  a. P(X > x | Y > y) -  the probability that X (Above grade (ground) living area square feet) is greater than x (1130 sq ft) given that Y (SalePrice) is greater than y ($163,000) is 0.989011.
+```{r}
+#given that Y > y
+data_a <- df[df$Y > y,]
+
+#P(X > x | Y > y)
+nrow(data_a[data_a$X > x,]) / nrow(data_a)
+
+```
+  
+
+  b. P(X > x, Y > y)  -  the probability that X (Above grade (ground) living area square feet) is greater than x (1130 sq ft) and that Y (SalePrice) is greater than y ($163,000) is 0.4931507.
+```{r}
+
+#P(X > x, Y > y)
+nrow(df[df$X > x & df$Y > y,]) / nrow(df)
+
+```
+  
+  
+  c. P(X < x | Y > y) -  the probability that X (Above grade (ground) living area square feet) is less than x (1130 sq ft) given that Y (SalePrice) is greater than y ($163,000) is 0.01098901.
+  
+```{r}
+#given that Y > y
+data_c <- df[df$Y > y,]
+
+#P(X < x | Y > y)
+nrow(data_c[data_a$X < x,]) / nrow(data_c)
+
+```
+  
+Does splitting the training data in this fashion make them independent? In other words, does P(X|Y)=P(X)P(Y))?   
+
+  * Answer: no, they are not independent.  The probabilities change significantly depending on what values of X we are looking at with respect to Y, and these should all be the same if X and Y are independent.
+  
+Check mathematically, and then evaluate by running a Chi Square test for association.  You might have to research this.  
+```{r, warning=FALSE}
+#check mathematically
+#does #P(X > x, Y > y) = P(X > x)*P(Y > y)? no
+nrow(df[df$X > x & df$Y > y,]) / nrow(df) == 
+  nrow(df[df$X > x,]) / nrow(df) * nrow(df[df$Y > y,]) / nrow(df)
+
+#chi square test
+chisq.test(X,Y)
+```
+
+  * Answer: X-squared is very high and the p-value is practically 0.  Therefore, there is a very strong association between X and Y, and as such, they are NOT independent.
+
+### Descriptive and Inferential Statistics. 
+
+Provide univariate descriptive statistics and appropriate plots for both variables.   Provide a scatterplot of X and Y.
+
+```{r}
+#X
+summary(X)
+hist(X)
+qqnorm(X)
+qqline(X)
+
+#Y
+summary(Y)
+hist(Y)
+qqnorm(Y)
+qqline(Y)
+
+#X vs. Y
+plot(X,Y)
+```
+
+Transform both variables simultaneously using Box-Cox transformations.  You might have to research this.
+
+```{r}
+### Box-Cox transformations
+# boxCox function
+boxCox <- function(a, lambda){
+  if(lambda == 0){
+    return(log(a))
+  }else{
+    return((a^lambda - 1)/lambda)
+  }
+}
+
+#check normality function
+bcNormality <-function(a,lambda){
+    temp<-boxCox(a,lambda)
+    temp2<-data.frame(qqnorm(temp,  plot.it = FALSE), stringsAsFactors = FALSE)
+    temp3<-summary(lm(temp2$y ~ temp2$x))$adj.r.squared
+    return(temp3)
+}
+
+#find best lambda for X
+lambda_X<-c()
+for(i in seq(-.05,.05,.005)){
+  lambda_X<-rbind(lambda_X,cbind(i,bcNormality(X,i)))
+}
+
+lambda_X <- data.frame(lambda_X, stringsAsFactors = FALSE)
+names(lambda_X) <-c("lambda","adjustedRSquared")
+plot(lambda_X$lambda,lambda_X$adjustedRSquared)
+bestLambda_X <- lambda_X$lambda[which(lambda_X$adjustedRSquared == max(lambda_X$adjustedRSquared))]
+bestLambda_X
+
+bc_X <-boxCox(X, bestLambda_X)
+
+#find best lambda for Y
+lambda_Y<-c()
+for(i in seq(-.5,.5,.05)){
+  lambda_Y<-rbind(lambda_Y,cbind(i,bcNormality(Y,i)))
+}
+
+lambda_Y <- data.frame(lambda_Y, stringsAsFactors = FALSE)
+names(lambda_Y) <-c("lambda","adjustedRSquared")
+plot(lambda_Y$lambda,lambda_Y$adjustedRSquared)
+bestLambda_Y <- lambda_Y$lambda[which(lambda_Y$adjustedRSquared == max(lambda_Y$adjustedRSquared))]
+bestLambda_Y
+
+bc_Y <-boxCox(Y, bestLambda_Y)
+
+### new summary statistics
+#bc_X
+summary(bc_X)
+hist(bc_X)
+qqnorm(bc_X)
+qqline(bc_X)
+
+#bc_Y
+summary(bc_Y)
+hist(bc_Y)
+qqnorm(bc_Y)
+qqline(bc_Y)
+
+#plot transformed X and transformed Y
+plot(bc_X,bc_Y)
+
+#how close is our manual approach? pretty close
+library(MASS)
+bc <- boxcox(Y ~ X, plotit = FALSE)
+bc$x[which.max(bc$y)]
+
+bc2_X <-boxCox(X,bc$x[which.max(bc$y)])
+summary(bc2_X)
+hist(bc2_X)
+qqnorm(bc2_X)
+qqline(bc2_X)
+
+```
+
+### Linear Algebra and Correlation.  
+
+Using at least three untransformed variables, build a correlation matrix.
+```{r}
+df2 <- data.frame(train$LotArea, train$X1stFlrSF, train$X2ndFlrSF, stringsAsFactors = FALSE)
+names(df2) <-c("LotArea","X1stFlrSF","X2ndFlrSF")
+correlationMatrix <- cor(df2)
+correlationMatrix 
+```
+
+
+Invert your correlation matrix. (This is known as the precision matrix and contains variance inflation factors on the diagonal.) 
+
+```{r}
+inverse_correlationMatrix <-MASS::ginv(correlationMatrix) 
+inverse_correlationMatrix 
+```
+
+
+Multiply the correlation matrix by the precision matrix, and then multiply the precision matrix by the correlation matrix.
+
+```{r}
+#as expected, these both produce the identity matrix
+round(correlationMatrix %*% inverse_correlationMatrix)
+round(inverse_correlationMatrix %*%  correlationMatrix) 
+
+```
+
+
+### Calculus-Based Probability & Statistics.  
+
+Many times, it makes sense to fit a closed form distribution to data.  For your non-transformed independent variable, location shift (if necessary)  it so that the minimum value is above zero.
+```{r}
+#no need to shift since minimum value is above zero
+min(df$X)
+```
+
+Then load the MASS package and run fitdistr to fit a density function of your choice.  (See  https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/fitdistr.html ).
+
+```{r}
+fittedDistribution <- fitdistr(df$X, "normal")
+fittedDistribution
+```
+
+Find the optimal value of the parameters for this distribution, and then take 1000 samples from this distribution (e.g., rexp(1000,$\lambda$) for an exponential). 
+```{r}
+samples<-rnorm(1000,mean = fittedDistribution$estimate[1], sd = fittedDistribution$estimate[2])
+
+```
+
+Plot a histogram and compare it with a histogram of your non-transformed original variable. 
+
+  * Answer: the sample histogram looks normal, which makes sense since it comes from the normal distribution.  However, it differs from the non-transformed original variable histogram, which is not normally distributed.  This distribution has a right skew and a much lower median value, even though the mean and sd are roughly the same.  So it would not be appropriate to use the normal distribution to model the non-transformed original variable.  The box-cox transformed variable is much closer to being normally distributed and thus could be approximated using the fitted distribution.
+  
+```{r}
+hist(samples, xlim=c(min(df$X),max(df$X)), breaks = 50)
+hist(df$X, breaks = 50)
+
+#medians
+median(samples)
+median(df$X)
+```
+
+
+### Modeling.  
+
+*Build some type of regression model and submit your model to the competition board.  Provide your complete model summary and results with analysis. * 
+
+I began by reading in the data and doing some initial exploration.  One of the first things I noticed was that there were lots of missing values in what I judged to be important columns.  In order to use these in a linear model effectively, I needed to "fill in" this missing values in some way.  While I could have treated each column with missing values individually, for the sake of time, I wrote code that looped through each of the columns in *train* and *test*, filling in the *NA* value with the median of the column if it was numeric or with the word "Missing" if it was categorical.  I am sure this is not the best treatment for all columns, but it does a pretty good job and is time effective.
+
+  
+```{r, message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+library(stringr)
+
+#get test data
+test<- read.csv("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA605/HW/FinalProject/test.csv", 
+                stringsAsFactors = FALSE)
+
+### fill in missing values for both test and train
+#train
+for(i in 2:(ncol(train)-1)){
+  if (is.character(train[,i])){
+    temp<-NA
+    temp <-as.character(count(train,train[,i], sort = TRUE)[1,1])
+    if(is.na(temp)){
+      temp <- "Missing"
+    }
+    train[which(is.na(train[,i])),i] <- temp
+    
+  } else if(is.numeric(train[,i])){
+      train[which(is.na(train[,i])),i] <-median(train[,i], na.rm = TRUE)
+  }
+  
+} #for
+
+#test
+for(i in 2:(ncol(test))){
+  if (is.character(test[,i])){
+    temp<-NA
+    temp <-as.character(count(test,test[,i], sort = TRUE)[1,1])
+    if(is.na(temp)){
+      temp <- "Missing"
+    }
+    test[which(is.na(test[,i])),i] <- temp
+    
+  } else if(is.numeric(test[,i])){
+      test[which(is.na(test[,i])),i] <-median(test[,i], na.rm = TRUE)
+  }
+  
+} #for
+```
+
+Next, based on previous data exploration, I attempted to normalize *SalePrice* using the boxCox transformation.  This would ensure that my model residuals would be more normally distributed, and hence, I would be meeting the assumptions necessary for using a linear model.
+
+I also added various new features based on exploring the existing variables and modifying them in some way to be (I hoped) more effective in predicting the *SalePrice* in my model.  I also did some cleanup along the way, overwriting some outliers and changing the data type in a few places to prevent these data irregularities from throwing off the model.
+
+
+```{r}
+####add features  for both test and train
+#box cox transformation of SalePrice  for train
+train$bc_SalePrice<-boxCox(train$SalePrice, bestLambda_Y)
+
+#yearsold
+train$YearsOld <- max(train$YearBuilt) - train$YearBuilt
+test$YearsOld <- max(train$YearBuilt) - test$YearBuilt
+train$YearsOld_Exp <- (train$YearsOld)^(.5)
+test$YearsOld_Exp <- (test$YearsOld)^(.5)
+
+#YearsRemod
+train$YearsRemod <- max(train$YearBuilt) - train$YearRemodAdd
+test$YearsRemod <- max(train$YearBuilt) - test$YearRemodAdd
+
+#GarageYrsOld
+train$GarageYrsOld <- max(train$GarageYrBlt) - train$GarageYrBlt
+test$GarageYrBlt[which(test$GarageYrBlt == 2207)] <- "2007" #replace error - 2207
+test$GarageYrBlt <- as.numeric(test$GarageYrBlt)
+test$GarageYrsOld <- max(test$GarageYrBlt) - test$GarageYrBlt
+train$GarageYrsOld_Exp <- (train$GarageYrsOld)^(.3)
+test$GarageYrsOld_Exp <- (test$GarageYrsOld)^(.3)
+
+#Month Median
+monthMedian <-group_by(train,MoSold) %>% summarise(median = median(bc_SalePrice))
+train$MoSold_Med <-NA
+test$MoSold_Med <- NA
+for (i in 1:nrow(monthMedian)){
+  train$MoSold_Med[which(train$MoSold == monthMedian$MoSold[i])] <- monthMedian$median[i]
+  test$MoSold_Med[which(test$MoSold == monthMedian$MoSold[i])] <- monthMedian$median[i]
+}
+
+#YrSold Median
+yearMedian <-group_by(train,YrSold) %>% summarise(median = median(bc_SalePrice))
+train$YrSold_Med <-NA
+test$YrSold_Med <- NA
+for (i in 1:nrow(yearMedian)){
+  train$YrSold_Med[which(train$YrSold == yearMedian$YrSold[i])] <- yearMedian$median[i]
+  test$YrSold_Med[which(test$YrSold == yearMedian$YrSold[i])] <- yearMedian$median[i]
+}
+
+#LotArea_Outlier
+train$LotArea_Outlier <- train$LotArea
+train$LotArea_Outlier[which(train$LotArea > 50000)] <- 50000 #set outliers to max reasonable
+train$LotArea_Log <- log(train$LotArea)
+test$LotArea_Outlier <- test$LotArea
+test$LotArea_Outlier[which(test$LotArea > 50000)] <- 50000 #set outliers to max reasonable
+test$LotArea_Log <- log(test$LotArea)
+
+#BsmtFinSF1_Outlier
+train$BsmtFinSF1_Outlier <- train$BsmtFinSF1
+train$BsmtFinSF1_Outlier[which(train$BsmtFinSF1_Outlier > 3000)] <- 
+  median(train$BsmtFinSF1_Outlier) #set outliers to median
+train$BsmtFinSF1_Outlier <- (train$BsmtFinSF1_Outlier)^(1.5)
+test$BsmtFinSF1_Outlier <- test$BsmtFinSF1
+test$BsmtFinSF1_Outlier[which(test$BsmtFinSF1_Outlier > 3000)] <- 
+  median(test$BsmtFinSF1_Outlier) #set outliers to median
+test$BsmtFinSF1_Outlier <- (test$BsmtFinSF1_Outlier)^(1.5)
+
+#BsmtUnfSF_Exp
+train$BsmtUnfSF_Exp<- train$BsmtUnfSF
+train$BsmtUnfSF_Exp <- (train$BsmtUnfSF_Exp)^(2)
+test$BsmtUnfSF_Exp<- test$BsmtUnfSF
+test$BsmtUnfSF_Exp <- (test$BsmtUnfSF_Exp)^(2)
+
+
+#TotalBsmtSF
+train$TotalBsmtSF_Outlier <- train$TotalBsmtSF
+train$TotalBsmtSF_Outlier[which(train$TotalBsmtSF_Outlier > 4000)] <- 
+  median(train$TotalBsmtSF_Outlier) #set outliers to median
+train$TotalBsmtSF_Outlier <- (train$TotalBsmtSF_Outlier)^(1.5)
+test$TotalBsmtSF_Outlier <- test$TotalBsmtSF
+test$TotalBsmtSF_Outlier[which(test$TotalBsmtSF_Outlier > 4000)] <- 
+  median(test$TotalBsmtSF_Outlier) #set outliers to median
+test$TotalBsmtSF_Outlier <- (test$TotalBsmtSF_Outlier)^(1.5)
+
+#X2ndFlrSF
+train$X2ndFlrSF_NoZero <- train$X2ndFlrSF
+train$X2ndFlrSF_NoZero[which(train$X2ndFlrSF_NoZero == 0)] <- mean(train$X2ndFlrSF_NoZero[which(train$X2ndFlrSF_NoZero != 0)]) #set zeros to mean
+test$X2ndFlrSF_NoZero <- test$X2ndFlrSF
+test$X2ndFlrSF_NoZero[which(test$X2ndFlrSF_NoZero == 0)] <- 
+  mean(test$X2ndFlrSF_NoZero[which(test$X2ndFlrSF_NoZero != 0)]) #set zeros to mean
+
+#OpenPorchSF
+train$OpenPorchSF_NoZero <- train$OpenPorchSF
+train$OpenPorchSF_NoZero[which(train$OpenPorchSF_NoZero == 0)] <- median(train$OpenPorchSF_NoZero[which(train$OpenPorchSF_NoZero != 0)]) #set zeros to mean
+test$OpenPorchSF_NoZero <- test$OpenPorchSF
+test$OpenPorchSF_NoZero[which(test$OpenPorchSF_NoZero == 0)] <- median(test$OpenPorchSF_NoZero[which(test$OpenPorchSF_NoZero != 0)]) #set zeros to mean
+
+
+#EnclosedPorch
+train$EnclosedPorch_NoZero <- train$EnclosedPorch
+train$EnclosedPorch_NoZero[which(train$EnclosedPorch_NoZero == 0)] <- median(train$EnclosedPorch_NoZero[which(train$EnclosedPorch_NoZero != 0)]) #set zeros to mean
+test$EnclosedPorch_NoZero <- test$EnclosedPorch
+test$EnclosedPorch_NoZero[which(test$EnclosedPorch_NoZero == 0)] <- median(test$EnclosedPorch_NoZero[which(test$EnclosedPorch_NoZero != 0)]) #set zeros to mean
+
+
+#ScreenPorch
+train$ScreenPorch_NoZero <- train$ScreenPorch
+train$ScreenPorch_NoZero[which(train$ScreenPorch_NoZero == 0)] <- median(train$ScreenPorch_NoZero[which(train$ScreenPorch_NoZero != 0)]) #set zeros to mean
+test$ScreenPorch_NoZero <- test$ScreenPorch
+test$ScreenPorch_NoZero[which(test$ScreenPorch_NoZero == 0)] <- median(test$ScreenPorch_NoZero[which(test$ScreenPorch_NoZero != 0)]) #set zeros to mean
+
+
+#PoolExists
+train$PoolExists<-0
+train$PoolExists[which(train$PoolArea > 0)]<-1
+test$PoolExists<-0
+test$PoolExists[which(test$PoolArea > 0)]<-1
+
+#MSSubClass
+train$MSSubClass_Char <- as.character(train$MSSubClass)
+test$MSSubClass_Char <- as.character(test$MSSubClass)
+
+
+```
+
+Next, I made the categorical variables into binary columns.  For example, if a single column had 5 distinct categorical values in it, I made 5 new columns, one for each of the distinct values, with 1s and 0s in it.  The 1s indicated that in the original column and row, the value there corresponded to the given distinct value being considered, while the 0s indicated a different value.
+
+While lm() will automatically do this for you, and I had originally NOT done this, I added this step in order to better automate feature selection below, as you will see.
+
+```{r}
+###binarize variables and add into training set
+#train
+for(i in 2:length(train)){
+  #i<-3
+  if(is.character(train[,i])){
+    #get distinct values
+    distinct<-unique(train[,i])
+    for(j in 1:length(distinct)){
+      #j<-1
+      train$temp <- train[,i]
+      index<-which(train$temp == distinct[j])
+      notIndex <-which(train$temp != distinct[j])
+      train$temp[index] <-1
+      train$temp[notIndex] <-0
+      train$temp<-as.numeric(train$temp)
+      names(train)[length(train)] <- paste0(names(train[i]),"_",distinct[j])
+      #View(cbind(train[i],train[length(train)]))
+    }#for
+  }#if
+}#for
+
+#test
+for(i in 2:length(test)){
+  #i<-3
+  if(is.character(test[,i])){
+    #get distinct values
+    distinct<-unique(test[,i])
+    for(j in 1:length(distinct)){
+      #j<-1
+      test$temp <- test[,i]
+      index<-which(test$temp == distinct[j])
+      notIndex <-which(test$temp != distinct[j])
+      test$temp[index] <-1
+      test$temp[notIndex] <-0
+      test$temp<-as.numeric(test$temp)
+      names(test)[length(test)] <- paste0(names(test[i]),"_",distinct[j])
+      #View(cbind(test[i],test[length(test)]))
+    }#for
+  }#if
+}#for
+
+```
+
+Finally, for modeling purposes, I created two subset data sets *train_subset* and *test_subset* that only containted numeric variables, including the binarized variables I had created above to stand in for the categorical variables.
+
+
+```{r}
+## create subset of train and test for modeling.  Only include numeric variables.
+#train
+train_subset<-c()
+train_subset_names<-c()
+for(i in 1:length(train)){
+  if(is.numeric(train[,i])){
+    train_subset<-cbind(train_subset,train[,i])
+    train_subset_names<-c(train_subset_names,names(train)[i])
+  }#if
+}#for
+train_subset<-data.frame(train_subset,stringsAsFactors = FALSE)
+names(train_subset)<-train_subset_names
+
+#test
+test_subset<-c()
+test_subset_names<-c()
+for(i in 1:length(test)){
+  if(is.numeric(test[,i])){
+    test_subset<-cbind(test_subset,test[,i])
+    test_subset_names<-c(test_subset_names,names(test)[i])
+  }#if
+}#for
+test_subset<-data.frame(test_subset,stringsAsFactors = FALSE)
+names(test_subset)<-test_subset_names
+
+```
+
+Now I could create the initial model.  I included all variables from the data set excluding the *Id*, *SalePrice*, and any other variables that were linear combinations of other variables, and hence, redundant.  I set the target variable to be the boxCox transformed variable *bc_SalePrice*.
+
+The initial model had an adjusted $R^2$ of 0.9345, which is pretty good.  But as one can see, there are lots of variables that appear to have no real significance (i.e., a high p-value).
+
+```{r}
+#create initial model
+model <- lm(bc_SalePrice ~ . 
+            - Id 
+            - SalePrice
+            - TotalBsmtSF #singularities
+            - GrLivArea #singularities
+            - YearBuilt #singularities
+            - YearRemodAdd #singularities
+            - GarageYrBlt #singularities
+            
+            , data = train_subset)
+summary <-summary(model)
+
+#Adjusted R-squared:  0.9346 
+summary$adj.r.squared
+
+#summary
+summary
+```
+
+In order to eliminate the high p-values, I set up a loop to automatically remove the variables that had the highest p-values.  I started with the variable that had the highest p-value (least significant), and worked my way down to the lowest p-value until all variables were under my desired threshold.  I could not do this if I was using categorical variables as originally given.  Some values in a categorical variable were significant while others were not, and to remove those that were not would have required removing the whole categorical variable.  By splitting them up into separate fields, I could remove the insignificant values for a categorical variable while keeping those that were significant.
+
+Interestingly, the adjusted $R^2$ value did not change very much, becoming 0.9352 with a p-value threshold of under 0.05.  However, one can see that the the number of variables is greatly reduced.
+
+```{r}
+##loop through variables to eliminate high p-values
+model2<-model
+summary2 <-summary
+
+while(sort(summary2$coefficients[,4], decreasing = TRUE)[1]>0.05) {
+  #update model by removing highest p-value until threshold reached
+  name <-names(sort(summary2$coefficients[,4], decreasing = TRUE)[1])
+  model2<- update(model2, as.formula(paste0(". ~ . -",name)))
+  summary2<-summary(model2)
+}
+
+#p-value limit: 0.10 - Adjusted R-squared:  0.9372
+#p-value limit: 0.05 - Adjusted R-squared:  0.9352
+summary2$adj.r.squared
+
+#summary2
+summary2
+
+```
+
+When I submitted this reduced model, it did not score as well in Kaggle as previous submissions using all of the variables had done.  So I decided to try one final approach.  I would remove any variables whose removal increased the adjusted $R^2$ value of the model.  I created another loop to do so, and had the loop continue while there were any increases in the adjusted $R^2$ value of the model.  Once this stopped, the loop ended and I had my final model.
+
+This approach barely increased the adjusted $R^2$ to 0.9354472, and it did not remove many variables.  However, it did produce my highest Kaggle score.
+
+```{r eval=TRUE}
+### loop through variables to increase adj.r-squared
+model3<-model
+summary3 <-summary
+previous_r2<-0
+current_r2 <-.1
+change<-"Yes"
+
+while(change=="Yes") {
+  change <- "No"
+  names_check<-names(sort(summary3$coefficients[,4], decreasing = TRUE))
+  for(i in 1:length(names_check)){
+    #i<-1
+    #update model by removing variable and see if adj.rsquared is higher
+    model3_compare<- update(model3, as.formula(paste0(". ~ . -",names_check[i])))
+    current_r2<-summary(model3_compare)$adj.r.squared
+    
+    #if adjrquared increases, update model
+    if(current_r2 > previous_r2){
+      model3<-model3_compare
+      summary3<-summary(model3_compare)
+      change<-"Yes"
+      previous_r2 <- current_r2
+    } else{
+      #do nothing
+    } #if
+    
+    #print(paste0(i,": adj-r.squared: ", previous_r2))
+  }#for
+} #while
+```
+```{r}
+#adjusted r squared - 0.9354472
+summary3$adj.r.squared
+
+#summary3
+summary3
+
+```
+
+I made one last attempt to increase my Kaggle score.  I added interaction variables to see if I could get the adjusted $R^2$ to increase even more.  To limit the number of variables to check and to only use those most significant, I used the model2 as a starting point and checked each variable's interaction against every other variable using the ":" operator.  As you can imagine, with 107 variables to check, this took a long time (41.28717 mins).
+
+I immediately got increased adjusted $R^2$ values, and it ended up being 0.9772524 after my code completed.  However, my Kaggle submission was much much worse, suggesting that I was overfitting the data I had and that this model was not generalizing.  This is not surprising as the variables increased to 766 in count.
+
+```{r eval=FALSE}
+### loop through variables to increase adj.r-squared
+model4<-model2
+summary4 <-summary2
+previous_r2<-0
+current_r2 <-.1
+startTime<-Sys.time()
+
+  names_check<-names(sort(summary4$coefficients[,4], decreasing = FALSE))
+  for(i in 2:(length(names_check)-1)){
+    for(j in (i+1):length(names_check)){
+      #only check ones that have not yet been checked
+      #i<-2
+      #j<-3
+      #update model by adding interaction variable and see if adj.rsquared is higher
+      model4_compare<- update(model4, as.formula(paste0(". ~ . +",names_check[i],":",names_check[j])))
+      current_r2<-summary(model4_compare)$adj.r.squared
+      
+      #if adjrquared increases, update model
+      if(current_r2 > previous_r2){
+        model4<-model4_compare
+        summary4<-summary(model4_compare)
+        previous_r2 <- current_r2
+      } else{
+        #do nothing
+      } #if
+      
+      print(paste0(i," ", j,": adj-r.squared: ", previous_r2))
+    }# for j
+  }#for i
+
+#time elapsed
+endTime<-Sys.time()  
+timeElapsed <- endTime - startTime
+  
+
+#adjusted r squared - 0.9772524
+summary4$adj.r.squared
+
+#summary4
+#summary4
+
+#number of variables - 766
+length(summary4$coefficients[,4])
+```
+
+So now what to do?  Again, many of these new variables had an extremely high p-value.  So I decided to remove any that had high p-values, as I had done previously.  I also wanted to reduce the number of variables being used since I still had way too many and was overfitting.  The adj.r.squared went up even more to a point (above 0.9807), and then came back down again.  I tried different p-values to reduce the number of variables, but none of these produced a better score on Kaggle.  
+
+When looking at the model, I could see that many variables were being reused in the interactions (e.g., 1st floor square footage) and the original variables that were NOT interactive were still the most significant.  So I wasn't gaining any generalizability by adding these interactive variables as they did not contain new information, even though the $R^2$ value was increasing due to overfitting.  Consequently I decided to be satisfied with my score as it was and to move on.
+
+```{r, eval=FALSE}
+###model 5 - remove all interaction variables that do NOT lower the adj.r.squared value
+model5 <- model4
+summary5 <-summary4
+
+while(sort(summary5$coefficients[,4], decreasing = TRUE)[1]>0.001) {
+  #update model by removing highest p-value until threshold reached
+  name <-names(sort(summary5$coefficients[,4], decreasing = TRUE)[1])
+  model5<- update(model5, as.formula(paste0(". ~ . -",name)))
+  summary5<-summary(model5)
+  print(summary5$adj.r.squared)
+}
+
+#p-value limit: 0.10 - Adjusted R-squared: 0.978595  
+#p-value limit: 0.05 - Adjusted R-squared: 0.9768811
+#p-value limit: 0.01 - Adjusted R-squared: 0.9604068
+#p-value limit: 0.005 - Adjusted R-squared: 0.9538743
+#p-value limit: 0.001 - Adjusted R-squared: 0.9506303
+summary5$adj.r.squared
+
+#summary2
+summary5
+
+#number of variables - 396 (0.05), 175 (0.01), 130 (0.005), 119 (0.001)
+length(summary5$coefficients[,4])
+
+```
+
+Did my first three linear models meet the necessary assumptions?  Looking at the residual plots for each, we can see that each is fairly similar.  While not perfect, each of the models does:
+
+  * have roughly constant variation of the residuals across the range of fitted values
+  * have roughly equal distribution of residuals across the X axis
+  * have no obvious pattern in the residuals that was missed by the regression
+  * have residuals that do follow a normal distribution for the most part, excepting the tails (which happens frequently)
+
+In short, while not perfect, each of the models seems to work pretty well and meets the conditions for a linear model.  With more time, I would work on trying to understand what is happening on the tails and see if this can be corrected in some way.
+
+```{r}
+#model
+plot(train_subset$bc_SalePrice,model$residuals)
+abline(h=0)
+qqnorm(model$residuals)
+qqline(model$residuals)
+
+#model2
+plot(train_subset$bc_SalePrice,model2$residuals)
+abline(h=0)
+qqnorm(model2$residuals)
+qqline(model2$residuals)
+
+#model3
+plot(train_subset$bc_SalePrice,model3$residuals)
+abline(h=0)
+qqnorm(model3$residuals)
+qqline(model3$residuals)
+
+```
+
+Next I predicted on the *test_subset* and submitted to Kaggle for evaluation.  I added some of the missing columns that *test_subset* did not have as a result of not having the same categorical values as *train_subset* did.  Then I predicted the *bc_SalePrice* using the *test_subset* and my best model3.  I transformed *bc_SalePrice* back into *SalePrice*.  After checking for missing values, I wrote my output and submitted to Kaggle.
+
+```{r, eval=FALSE}
+#add dummy columns for model to work
+test_subset$SalePrice <-0
+test_subset$Utilities_NoSeWa <- 0
+test_subset$Condition2_RRNn <- 0
+test_subset$Condition2_RRAn <- 0
+test_subset$Condition2_RRAe <- 0
+test_subset$HouseStyle_2.5Fin <- 0
+test_subset$RoofMatl_Metal <- 0
+test_subset$RoofMatl_Membran <- 0
+test_subset$RoofMatl_Roll <- 0
+test_subset$RoofMatl_ClyTile <- 0
+test_subset$Exterior1st_Stone <- 0
+test_subset$Exterior1st_ImStucc <- 0
+test_subset$Exterior2nd_Other<- 0
+test_subset$Heating_OthW<- 0
+test_subset$Heating_Floor<- 0
+test_subset$Electrical_Mix<- 0
+test_subset$GarageQual_Ex<- 0
+test_subset$PoolQC_Fa<- 0
+test_subset$MiscFeature_TenC<- 0
+
+#predict test
+predictions<-predict(model3,test_subset)
+prediction_df<-data.frame(cbind(test$Id,predictions))
+names(prediction_df) <- c("Id", "SalePrice")
+
+#transform bc_SalePrice back to SalePrice
+prediction_df$SalePrice <- (prediction_df$SalePrice * bestLambda_Y + 1)^(1/bestLambda_Y)
+
+
+########## final checks
+#check how many rows missing
+nrow(prediction_df[is.na(prediction_df$SalePrice),])
+which(is.na(prediction_df$SalePrice))
+
+#check if any values less than 0.  Assign substitute value
+prediction_df$SalePrice[prediction_df$SalePrice < 0] <- median(train$SalePrice)
+
+#output
+write.csv(prediction_df,
+          paste0("C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA605/HW/FinalProject/submission_",
+                 str_replace_all(Sys.time(),"[: ]","_"),".csv"), 
+          row.names = FALSE)
+
+#Submit to Kaggle
+#https://www.kaggle.com/c/house-prices-advanced-regression-techniques/
+```
+
+*Report your Kaggle.com  user name and score*
+
+I submitted various outputs from several model trials, hoping to break into the top 50% by rank, which I eventually did.  At the time of this writing, I had the rank, score, and percentile below:
+
+  * User Name: Andrew Carson
+  * Best Score: #1350, 0.13597
+  * Percentile: top 50.4% (1-1350/2723 teams)
+  * ![User Name and Best Score](C:/Users/Andy/Desktop/Personal/Learning/CUNY/DATA605/HW/FinalProject/finalScore.png)
+
+
+```{r}
+print(paste0("Percentile: ",1-1350/2723))
+```
+
+*Conclusion*
+
+So what matters in determining a house price besides location, location, location?  Without normalizing the variables it is a little difficult to say in terms of impact or contribution to the overall price.  However, we can say, based on p-value, which variables are most highly correlated with the *SalePrice*.  The top 10, based on using model2 (and ignoring the intercept), are:
+
+
+```{r}
+mostImportant<-data.frame(sort(summary2$coefficients[,4], decreasing = FALSE)[2:11])
+names(mostImportant)<- c("P-Value")
+mostImportant
+      
+```
+
+In short, how much square footage does the house have?  More is better.  What kind of roof does it have?  Certain kinds (mebrane, metal) are better than others (Composite Shingle, Woodshake).  What is the Overall condition of the house?   A higher ranking is better. Other high ranking variables not displayed are zoning (commercial zoning lowers the price), overall quality (higher is better), basement square footage (more is better), and lot area (more is better).  None of these is surprising and each makes sense with our own experiences of what most people value in a house.
