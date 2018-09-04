@@ -1,0 +1,124 @@
+---
+title: 'DATA 608: HW 1'
+author: "Andrew Carson"
+date: "August 28, 2018"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+
+**Principles of Data Visualization and Introduction to ggplot2**
+
+I have provided you with data about the 5,000 fastest growing companies in the US, as compiled by Inc. magazine. lets read this in:
+
+```{r}
+
+inc <- read.csv("https://raw.githubusercontent.com/charleyferrari/CUNY_DATA_608/master/module1/Data/inc5000_data.csv", header= TRUE)
+
+```
+
+And lets preview this data:
+
+```{r}
+
+head(inc)
+
+```
+```{r}
+
+summary(inc)
+
+```
+
+Think a bit on what these summaries mean. Use the space below to add some more relevant non-visual exploratory information you think helps you understand this data:
+
+Answer:
+
+  * Growth rate: ranges from 0.34 to 421 with a median of 1.4.  Consequently, there will be lots of small values and very few large values, creating a skew right.
+  * Revenue: this is similar, in that the range from 2,000,000 to 10,000,000,000 has an average of 48,220,000, making it also skewed right.
+  * Industry: The top category of industry by count is IT, followed by Business and Marketing.  I'd be curious to know how this relates to growth rate and revenue.  Using code below, the average growth rate by industry does not match with count by industry.  IT and Business are not in the top 10.  At the top is energy and Consumer products.  For average Revenue by industry, computer hardware and energy are on top, so this also does not match with the top counts by industry.
+  * Employees: most companies are small.  The range from 1 to 66,803 has a 3rd quartile of 132.  This doesn't surprise me as it is very easy for small companies to have large growth rates (e.g., moving from 1 to 2 employees doubles the company size), while it is much more difficult for large companies to have large growth rates.  This can be confirmed by comparing Employee size to Growth Rate.  By grouping the employee size into five buckets of equal counts of companies, we can see that the lowest employee size bucket (1, 25) has the highest average growth rate (4.9%), followed by the next bucket (25,53), the next bucket (53, 132), and the final bucket (132, 66,803), each in order of employee size descending.
+  * City and State: While the top city is New York, the top state is CA.  This must mean that CA has more cities with growing businesses than NY, so the growth is less concentrated.
+
+```{r, message=FALSE}
+library(tidyr)
+library(dplyr)
+
+# industry vs. growth rate
+industryVsGrowth<-inc %>%
+  group_by(Industry) %>%
+  summarise(avg_Growth_Rate = mean(Growth_Rate, na.rm=TRUE)) %>%
+  arrange(desc(avg_Growth_Rate))
+
+head(industryVsGrowth, 10)
+
+
+# industry vs. revenue
+industryVsRevenue<-inc %>%
+  group_by(Industry) %>%
+  summarise(avg_Revenue = mean(Revenue, na.rm=TRUE)) %>%
+  arrange(desc(avg_Revenue))
+
+head(industryVsRevenue, 10)
+
+# employees vs. growth rate
+inc$Employees_Cut <- cut(inc$Employees,fivenum(inc$Employees))
+
+employeesVsGrowth<-inc %>%
+  group_by(Employees_Cut) %>%
+  summarise(avg_Growth_Rate = mean(Growth_Rate, na.rm=TRUE)) %>%
+  arrange(desc(avg_Growth_Rate))
+
+head(employeesVsGrowth, 10)
+
+```
+
+## Question 1
+
+Create a graph that shows the distribution of companies in the dataset by State (i.e. how many are in each state). There are a lot of States, so consider which axis you should use. This visualization is ultimately going to be consumed on a 'portrait' oriented screen (ie taller than wide), which should further guide your layout choices.
+
+```{r, message=FALSE}
+library(ggplot2)
+
+#bar plot
+qplot(data=inc, x=reorder(State, table(inc$State)[State]), ylab = "Count", xlab = "State", main = "States by Count of Companies") + geom_bar() + coord_flip()
+
+```
+
+## Question 2
+
+Lets dig in on the state with the 3rd most companies in the data set. Imagine you work for the state and are interested in how many people are employed by companies in different industries. Create a plot that shows the average and/or median employment by industry for companies in this state (only use cases with full data, use R's `complete.cases()` function.) In addition to this, your graph should show how variable the ranges are, and you should deal with outliers.
+
+```{r}
+
+# state with 3rd most companies is: NY
+NewYork <- inc %>%
+  filter(State=="NY") %>%
+  filter(Employees < 1000) #handle outliers based on visual inspection
+
+#complete.cases
+NewYork <- NewYork[complete.cases(NewYork),]
+
+#boxplot: handles outliers, ranges, median
+qplot(data=NewYork, x=reorder(Industry, -Employees), y=Employees, xlab="Industry", ylab="Employees", main="Employee Counts by Industry") + geom_boxplot() + theme(axis.text.x = element_text(angle=90, vjust=1))
+
+```
+
+## Question 3
+
+Now imagine you work for an investor and want to see which industries generate the most revenue per employee. Create a chart that makes this information clear. Once again, the distribution per industry should be shown.
+
+```{r}
+#revenue per employee
+inc$RevPerEmp <- inc$Revenue / inc$Employees
+
+#complete cases and remove outliers
+inc_complete <-inc[complete.cases(inc),]
+inc_complete <- inc %>% filter(RevPerEmp < 1000000)
+
+#boxplot: handles outliers, ranges, median
+qplot(data=inc_complete, x=reorder(Industry, -RevPerEmp), y=RevPerEmp, xlab="Industry", ylab="Revenue Per Employee", main="Revenue Per Employee by Industry") + geom_boxplot() + theme(axis.text.x = element_text(angle=90, vjust=1))
+
+```
+
