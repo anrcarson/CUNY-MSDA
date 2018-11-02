@@ -1,0 +1,143 @@
+<html>
+
+<!--
+Part1: 
+
+This is one of three homework assignments you can complete for this week( you must do two, you may do all three for extra credit).
+This is geared towards those of you who have never worked with javascript before.
+
+Your assignment should be in the form of an HTML page, which I will be able to run locally. Refer to the file 'js_in_webpage.html' 
+on the github page for instructions on settingup javascript to run on an HTML page,and how to run/debug.  
+
+You should complete both of these in 2(or more)functions on one HTML page.
+
+Create a function to reverse any word that you type in.  This can be typed into either an input box or an alert box, and then print 
+the result in a box or on the webpage.
+
+Create a function that takes an input number, and prints a table with the first 20 multiples of the number,in order 5x4:
+
+example:type in 2 and it results in:
+<table>
+<tr><td>2</td><td>4</td><td>6</td><td>8</td></tr>
+<tr><td>10</td><td>12</td><td>14</td><td>16</td></tr>
+<tr><td>18</td><td>20</td><td>22</td><td>24</td></tr>
+<tr><td>26</td><td>28</td><td>30</td><td>32</td></tr>
+<tr><td>34</td><td>36</td><td>38</td><td>40</td></tr>
+</table>
+    
+    -->
+
+<head><title>DATA 608 HW 5 Part 1</title></head>
+
+<body>
+
+<h1>DATA 608 HW 5 Part 1</h1>
+<h2>Part A: Reverse A Typed-In Word</h2>
+
+
+<script type="text/javascript">
+
+document.write('Type any word into the box.  The output displayed will be the word reversed.')
+
+</script>
+
+<script type="text/javascript">
+function reverse(word){
+
+    var reverseWord; 
+    reverseWord = '';
+	
+	var i;
+	for (i = 0; i <= word.length; i++) { 
+		reverseWord += word.charAt(word.length - i);
+	} ;
+
+    var str;
+    str = 'The reverse of \'' + word + '\' is \'' + reverseWord + '\'' ;
+    
+    return(str);
+ 
+  
+};
+
+function calc(){
+    var t = document.getElementById("target");
+    t.innerHTML = reverse(document.getElementById('word').value);
+};
+
+</script>
+
+<p>
+<form>
+    <input id="word" type="text" size="4">
+    <input type="button" value="Reverse Word" onClick="calc();">
+</form>
+</p>
+
+<div id="target"></div>
+
+
+<h2>Part B: Input Number, Output 20 Multiples</h2>
+
+<script type="text/javascript">
+
+document.write('Input a number to print a table with the first 20 multiples of the number, in order, formatted as 5x4. <br>')
+
+</script>
+
+<script type="text/javascript">
+function multiples(num){
+	
+	//start array
+    var multipleArray = []; 
+	
+	//get multiples
+	var i;
+	for (i = 0; i < 20; i++) { 
+		multipleArray[i] = num * (i+1);
+	} ;
+    
+	//create table
+	var j;
+	var k;
+	var l = 0;
+	var tableText = '<table>';
+	for (j = 0; j < 5; j++) { 
+		tableText += '<tr>';
+		for (k = 0; k < 4; k++) {
+			tableText += '<td>' + multipleArray[l] + '</td>';
+			l ++;
+		};
+		tableText += '</tr>';
+	} ;
+	tableText += '</table>';
+	
+	
+	//return table
+    return(tableText);
+ 
+  
+};
+
+function calcTable(){
+    var t = document.getElementById("targetTable");
+    t.innerHTML = multiples(document.getElementById('num').value);
+};
+
+</script>
+
+
+
+<p>
+<form>
+    <input id="num" type="number" size="4">
+    <input type="button" value="Get Multiples" onClick="calcTable();">
+</form>
+</p>
+
+<div id="targetTable"></div>
+
+
+
+</body>
+</html>

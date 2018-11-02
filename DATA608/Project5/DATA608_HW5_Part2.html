@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+
+<html>
+
+<!--
+Part2: 
+
+This is one of three homework assignments you can complete for this week you must do two,you may do all three for extra credit).
+This is geared towards those of you who have worked with javascript before.
+
+Your assignment should be in the form of an HTML page, which I will be able to run locally.
+Refer to the file 'js_in_webpage.html' on the github page for instructions on setting up javascript to run on an HTML page, and how to run/debug.
+You should complete both of these in 2(or more) functions on one HTML page.
+
+Write a function to load the presidents.csv data and display the data as an html table(you may use a csv parser from any available library, 
+though I encourage you to try the d3 one).
+
+Now that you have the presidents data loaded, write a function that will return that president’s height & weight when you type it in.
+This can be typed into either an input box or an alert box, and then print the result in a box or on the webpage.
+
+Deployment:
+Your apps from parts 1 and 2 must be deployed.  There are a lot of options for deploying javascript apps, however I would recommend using githubpages.
+Read more about how githubpages work here: https://pages.github.com/
+    -->
+
+
+
+<head>
+	<title>DATA 608 HW 5 Part 2</title>
+</head>
+
+
+<body>
+	<h1>DATA 608 HW 5 Part 2</h1>
+	<h2>Part A: Load Presidents.csv</h2>
+
+	<script type="text/javascript">
+	//text
+	document.write('Load the presidents.csv data and display the data as an html table. <p>')
+	</script>
+
+	<script src = "http://d3js.org/d3.v3.min.js">
+	//load d3 package
+	</script> 
+
+	<script type = "text/javascript", charset = "utf-8">
+	//load html table
+	//code reference: http://bl.ocks.org/ndarville/7075823
+	
+
+		d3.text("https://raw.githubusercontent.com/charleyferrari/CUNY_DATA_608/master/module5/js_examples/Hello%20World/data/presidents.csv",
+		function (data) {
+			var parsedCSV = d3.csv.parseRows(data);
+
+			var container = d3.select("body")
+					.select("p")
+                    .append("table")
+					.selectAll("tr")
+					.data(parsedCSV).enter()
+					.append("tr")
+
+				.selectAll("td")
+					.data(function(d) { return d; }).enter()
+					.append("td")
+					.text(function(d) { return d; });	
+		}); 
+		
+
+
+		
+		
+	 </script>
+	 
+	 <p></p>
+	 
+	 <h2>Part B: Return A President's Height & Weight</h2>
+	 
+	 <script type="text/javascript">
+	//text
+	document.write('Enter an above President\'s name and click the button to return that President\'s height & weight.<p>')
+	</script>
+	
+	
+	<script type="text/javascript">
+	//reference: 
+	//http://bl.ocks.org/d3noob/8dc93bce7e7200ab487d
+	//https://stackoverflow.com/questions/32580456/how-can-create-a-table-with-using-filter-on-csv-data
+	
+	var str; //make global
+	
+	function getHeightWeight(){
+	
+		var t = document.getElementById("target");
+		
+		var president = document.getElementById('president');
+		
+		d3.text("https://raw.githubusercontent.com/charleyferrari/CUNY_DATA_608/master/module5/js_examples/Hello%20World/data/presidents.csv",
+		function (data) {
+			var parsedCSV = d3.csv.parseRows(data);
+			
+			
+			var filteredData = parsedCSV.filter(function(obj) {
+			   if (obj[0] == president.value) {
+
+				   return obj;
+
+					};
+			   });
+			   
+			if (filteredData.length >0) {
+				var pres_name = filteredData[0][0];
+				var pres_height = filteredData[0][1];
+				var pres_weight = filteredData[0][2];
+				
+				str = '<p>The height and weight of \'' + pres_name+ '\' are \'' + pres_height  + '\' inches and \'' +  pres_weight + '\' lbs.</p>' ;
+			} else {
+				str = '<p>The name \'' + president.value + '\' is not a president listed above.  Please try again. </p>' ;
+			}
+			
+			t.innerHTML = str;
+    
+		});
+	
+	};
+
+	</script>
+
+	<p>
+	<form>
+		<input id="president" type="text" size="20">
+		<input type="button" value="Search for President" onClick="getHeightWeight();">
+	</form>
+	</p>
+
+	
+	<div id="target"></div>
+	
+	 
+</body>
+</html>
