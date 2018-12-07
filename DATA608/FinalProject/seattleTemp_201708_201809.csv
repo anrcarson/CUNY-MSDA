@@ -1,4 +1,4 @@
-Year,Month,Day,MonthNum,Date,Temp_Max,Temp_Avg,Temp_Min,DewPoint_Max,DewPoint_Avg,DewPoint_Min,Humidty_Max,Humidity_Min,WindSpeed_Max,WindSpeed_Min,Pressure_Max,Pressure_Min,Precip_Avg
+Year,Month,Day,MonthNum,Date,Temp_Max,Temp_Avg,Temp_Min,DewPoint_Max,DewPoint_Avg,DewPoint_Min,Humidity_Max,Humidity_Min,WindSpeed_Max,WindSpeed_Min,Pressure_Max,Pressure_Min,Precip_Avg
 2017,Aug,1,8,8/1/2017,87,74,62,58,56,53,78,36,10,0,30.17,30.04,0
 2017,Aug,2,8,8/2/2017,87,77,68,62,58,54,73,34,10,0,30.07,29.94,0
 2017,Aug,3,8,8/3/2017,90,80,69,62,58,53,75,29,9,0,30,29.86,0
